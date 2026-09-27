@@ -59,3 +59,24 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 2 – nguoiDuyet, nguoiChot, lọc phạm vi theo đơn vị ✅
+
+**Đã làm**
+- `src/lib/kpi/chuoi.ts`: **bảng cấu hình chuỗi duyệt – chốt** duy nhất (vị trí → vai trò người duyệt, người chốt, cờ `gopDuyetChot` cho HP), `viTriDuocDuyet`, `viTriDuocChot`, `PHAM_VI_BAO_CAO`.
+- `src/lib/co-cau.ts` (hàm thuần trên ảnh chụp cơ cấu):
+  - `nguoiDuyet(u)`, `nguoiChot(u)`: cùng một hàm tra "người giữ vai trò R phụ trách u" (TBM cùng bộ môn, TK cùng khoa, HP của khoa, HT)
+  - `lyDoThieuNguoi`, `lyDoKhongGuiDangKy` (A3: thiếu người duyệt hoặc người chốt → chặn gửi)
+  - `nguoiToiDuyet(m)`, `nguoiToiChot(m)`: lọc ngược bằng chính `nguoiDuyet`/`nguoiChot` nên luôn khớp nhau
+  - `phamViBaoCao(m)` (mục 6.3), `tenDonVi(u)`, `canhBaoThieuNguoi()` (cho trang Xem cấu hình)
+- `src/lib/services/co-cau.ts`: `taiCoCau(tx)` tải cơ cấu hiện tại từ DB; `layCoCau()` cache theo request cho page.
+- Test:
+  - unit `src/lib/co-cau.test.ts` 16 test: đủ 4 vị trí; HT/Admin không có người duyệt; thiếu TBM / TK / HP / HT; `hieuPhoId` trỏ tới người không còn là HP; cảnh báo admin; dữ liệu giả 2 khoa để kiểm tra lọc đơn vị (người duyệt/chốt, người mình duyệt/chốt, phạm vi báo cáo, tên đơn vị)
+  - tích hợp `tests/co-cau.int.test.ts` trên seed
+
+**Tự chọn**
+- Người chốt trên màn hình Chốt không gồm HP: HT chốt task HP ngay trên màn hình Duyệt (mục 6.1, 7.5).
+- Tên đơn vị của HP là danh sách khoa phụ trách; chưa phụ trách khoa nào → "Chưa phụ trách khoa nào".
+
+**Còn tồn**
+- Không có.
