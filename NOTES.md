@@ -151,3 +151,43 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn / ghi chú kỹ thuật**
 - Cảnh báo `pg` "client.query() when the client is already executing a query" đến từ bên trong Prisma 7 (query interpreter chạy song song trong transaction), không phải code dự án; vô hại với `pg` 8. Không nâng `pg` lên 9 cho tới khi Prisma sửa.
+
+## Bước 5 – GV Cuối kỳ + TBM Duyệt task + Xin thêm task ✅
+
+**Đã làm**
+- `/gv/cuoi-ky?kyId=`:
+  - chọn kỳ (kỳ cũ để xem lại)
+  - chưa được duyệt thì hiện "Danh sách nhiệm vụ chưa được trưởng bộ môn duyệt"
+  - khối tổng quan: biểu đồ tròn Recharts 4 phần (Đã duyệt/Chờ duyệt/Bị từ chối/Chưa làm) chỉ tính task bắt buộc, % ở giữa, xếp loại đăng ký, nhãn "+N task vượt", đếm ngược deadline
+  - danh sách nhiệm vụ → task (cả task mở rộng đã được giao)
+  - khu "Xin thêm task" (Xin làm / Đang chờ duyệt / Bị từ chối + Xin lại / Đã được giao)
+- `/gv/cuoi-ky/task/[id]`:
+  - form nộp minh chứng (Chưa làm / Bị từ chối → tạo lần nộp mới)
+  - form sửa/thay minh chứng của lần nộp hiện tại (Chờ duyệt: bỏ file cũ, thêm file, sửa ghi chú/link)
+  - Đã duyệt → khóa
+  - lịch sử các lần nộp: file, thời gian, trạng thái, nhận xét và người duyệt
+- Upload qua Route Handler:
+  - `POST /api/gv-task/[id]/bai-nop`, `PATCH /api/bai-nop/[id]` (logic ở `src/lib/services/bai-nop.ts`)
+  - kiểm tra đuôi file + 20MB + tối đa 10 file ở server (trình duyệt kiểm tra sớm); chặn request quá lớn theo Content-Length
+  - lỗi DB → xóa file vừa ghi; bỏ file khi sửa → xóa file trên ổ đĩa
+- `GET /api/files/[id]`:
+  - quyền minh chứng: GV chủ, TBM cùng bộ môn, Admin
+  - quyền giấy tờ (dùng ở bước 7): người gửi, người nhận, Admin
+  - PDF/ảnh xem trực tiếp, loại khác và `?tai=1` thì tải về
+  - header `nosniff`, `no-store`
+- TBM:
+  - `/tbm/duyet-task` + `/[baiNopId]` (xem file, ghi chú, link, lịch sử; Duyệt/Từ chối). Duyệt/từ chối đồng bộ `GvTask.trangThai`.
+  - `/tbm/duyet-xin-them` (duyệt thì tạo GvTask mở rộng ở trạng thái Chưa làm)
+- Thông báo: GV nộp / xin thêm → TBM; duyệt/từ chối task, yêu cầu → GV.
+- Test:
+  - unit `tien-do` 4
+  - tích hợp: `bai-nop.int.test.ts` 7 (luật file, sửa khi Chờ duyệt, nộp lại tạo lần mới, Đã duyệt bị chặn, quyền tải file, xin thêm, hết deadline/kỳ chốt), `quyen-api.int.test.ts` 3 (Admin/TBM gọi API nộp/sửa → 403, chưa đăng nhập → 401)
+  - E2E `e2e/buoc-5-cuoi-ky.spec.ts` 7/7
+
+**Tự chọn**
+- Tối đa 10 file mỗi lần nộp (B8). Sửa lần nộp hiện tại giữ nguyên thời điểm nộp ban đầu.
+- Biểu đồ và nhãn "+N task vượt" chỉ đếm task mở rộng Đã duyệt; biểu đồ không vượt 100%.
+- Phần trăm làm tròn 2 chữ số, hiển thị kiểu Việt (vd "14,3%").
+
+**Còn tồn**
+- Khối "Kết quả" sau khi chốt kỳ làm ở bước 6.
