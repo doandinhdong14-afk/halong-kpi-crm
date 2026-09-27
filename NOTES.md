@@ -174,3 +174,21 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Ghi chú git**
 - Trong bước 5, nhánh `v1.4` đã được đổi tên thành `main` và gắn remote `origin` (GitHub), kèm 2 commit tự động "Initial commit", "Add teacher scoring page" chứa file của bước 5 (đã push nên không sửa lại lịch sử). Tôi không push; các bước tiếp tục commit trên `main`.
+
+## Bước 7 – Màn hình Chốt (TK, HP, HT) ✅
+
+**Đã làm**
+- `/chot?kyId=&loc=&nguoi=&donVi=&task=` (một trang cho TK → task GV "Chốt task giáo viên", HP → task TBM "Chốt task trưởng bộ môn", HT → task TK "Chốt task trưởng khoa"):
+  - chỉ người mà mình là người chốt (`nguoiToiChot`), chỉ task `CHO_CHOT` / `DA_CHOT` / `TRA_VE`; không có danh sách đăng ký
+  - ô đếm task chờ chốt; mặc định lọc Chờ chốt, cũ nhất lên trước theo `guiChotLuc` (B10); lọc theo trạng thái, theo người, theo đơn vị
+  - mở task: dùng chung `ChiTietTaskQuanLy` (minh chứng xem/tải, nhận xét của người duyệt trong lịch sử nộp) → **Chốt** / **Trả về** (bắt buộc nhận xét)
+- Người duyệt xử lý task bị trả về trên màn hình Duyệt: thấy nhận xét của người chốt, nút **Trả <chức danh> làm lại** (→ Bị từ chối, nhận xét mới người làm KPI thấy) hoặc **Duyệt lại** (→ Đã duyệt, rồi gửi lại).
+- Toàn bộ vòng trạng thái dùng lại `thucHienTask` + máy trạng thái của bước 6; không có code riêng theo vai trò.
+- Test: tích hợp `tests/chot.int.test.ts` 5 (đủ vòng 5.3 kể cả trả về → trả làm lại → nộp lại → chốt và trả về → duyệt lại; % chỉ tăng khi chốt (0 → 33,33); người làm KPI không thấy nhận xét của người chốt; người chốt không chốt được task chưa gửi lên; đã chốt không ai sửa; đúng cấp HP chốt TBM, HT chốt TK; thiếu hiệu phó → TK không gửi lên task TBM); E2E `e2e/buoc-07-chot.spec.ts` 5/5.
+
+**Tự chọn**
+- Lọc "theo đơn vị" dùng tên đơn vị của người làm KPI (bộ môn của GV/TBM, khoa của TK).
+- Task đang mở được tra riêng (vẫn trong phạm vi được thấy) nên vừa chốt xong vẫn còn hiện chi tiết.
+
+**Còn tồn**
+- Không có.
