@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import type { Role } from "@/generated/prisma/enums";
+import type { DoiTuong, Role } from "@/generated/prisma/enums";
 import { LoiNghiepVu } from "@/lib/loi";
 import { userIdTuPhien } from "./session";
 
@@ -41,4 +41,17 @@ export async function kiemTraVaiTro(...roles: Role[]): Promise<NguoiDung> {
     throw new LoiNghiepVu("Bạn không có quyền thực hiện thao tác này.", 403);
   }
   return u;
+}
+
+/** Người làm KPI (GV, TBM, TK, HP) – mục 3.1. */
+export type NguoiLamKpi = NguoiDung & { role: DoiTuong };
+
+const VAI_TRO_LAM_KPI = ["GV", "TBM", "TK", "HP"] as const;
+
+export async function yeuCauNguoiLamKpi(): Promise<NguoiLamKpi> {
+  return (await yeuCauVaiTro(...VAI_TRO_LAM_KPI)) as NguoiLamKpi;
+}
+
+export async function kiemTraNguoiLamKpi(): Promise<NguoiLamKpi> {
+  return (await kiemTraVaiTro(...VAI_TRO_LAM_KPI)) as NguoiLamKpi;
 }

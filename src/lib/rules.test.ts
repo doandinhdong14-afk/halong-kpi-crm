@@ -13,7 +13,7 @@ const sauHan = new Date("2026-09-27T17:00:00Z"); // 00:00 ngày hôm sau (VN)
 const cuoiDeadline = new Date("2026-10-27T16:59:59Z");
 const sauDeadline = new Date("2026-10-27T17:00:00Z");
 
-describe("luật thời gian (mục 9.1)", () => {
+describe("luật thời gian (bảng 10.1)", () => {
   it("Nháp: gửi được đến hết hạn đăng ký", () => {
     expect(lyDoKhongSuaDangKy(ky, null, truocHan)).toBeNull();
     expect(lyDoKhongSuaDangKy(ky, "NHAP", truocHan)).toBeNull();
@@ -26,19 +26,19 @@ describe("luật thời gian (mục 9.1)", () => {
     expect(lyDoKhongSuaDangKy(ky, "TU_CHOI", sauDeadline)).toMatch(/deadline/);
   });
 
-  it("Chờ duyệt / Đã duyệt: GV chỉ xem", () => {
+  it("Chờ duyệt / Đã duyệt: người làm KPI chỉ xem", () => {
     expect(lyDoKhongSuaDangKy(ky, "CHO_DUYET", truocHan)).toMatch(/chờ/);
     expect(lyDoKhongSuaDangKy(ky, "DA_DUYET", truocHan)).toMatch(/đã được duyệt/);
   });
 
-  it("TBM duyệt đăng ký, thao tác task: đến hết deadline", () => {
+  it("người duyệt duyệt đăng ký, mọi thao tác task: đến hết deadline", () => {
     expect(lyDoKhongDuyetDangKy(ky, cuoiDeadline)).toBeNull();
     expect(lyDoKhongDuyetDangKy(ky, sauDeadline)).toMatch(/deadline/);
     expect(lyDoKhongThaoTacTask(ky, cuoiDeadline)).toBeNull();
     expect(lyDoKhongThaoTacTask(ky, sauDeadline)).toMatch(/deadline/);
   });
 
-  it("A1: kỳ đã chốt hoặc chưa công bố → chặn mọi thao tác", () => {
+  it("B5: kỳ đã chốt hoặc chưa công bố → chặn mọi thao tác", () => {
     const chot = { ...ky, daChot: true };
     const chuaCongBo = { ...ky, daCongBo: false };
     for (const k of [chot, chuaCongBo]) {

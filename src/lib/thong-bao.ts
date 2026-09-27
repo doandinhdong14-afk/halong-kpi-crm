@@ -1,32 +1,35 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { db } from "@/lib/db";
 
 type Tx = Prisma.TransactionClient;
 
 /**
- * Tạo thông báo trong web cho danh sách người nhận.
- * maSuKien: khóa chống trùng (vd nhắc hạn) — cùng user + maSuKien chỉ tạo một lần.
+ * Tạo thông báo trong web (mục 11) cho danh sách người nhận (bỏ qua null, trùng).
+ * - tru: không gửi cho chính người thao tác (B12), vd HT chốt task HP thì chỉ báo HP.
+ * - maSuKien: khóa chống trùng (vd nhắc việc) — cùng user + maSuKien chỉ tạo một lần.
  */
 export async function guiThongBao(
   tx: Tx,
-  userIds: string[],
+  nguoiNhan: (string | null | undefined)[],
   noiDung: string,
-  link?: string,
-  maSuKien?: string,
+  opts: { link?: string; maSuKien?: string; tru?: string } = {},
 ): Promise<number> {
-  const ids = [...new Set(userIds)];
+  const ids = [...new Set(nguoiNhan.filter((x): x is string => !!x && x !== opts.tru))];
   if (!ids.length) return 0;
   const { count } = await tx.thongBao.createMany({
-    data: ids.map((userId) => ({ userId, noiDung, link: link ?? null, maSuKien: maSuKien ?? null })),
+    data: ids.map((userId) => ({ userId, noiDung, link: opts.link ?? null, maSuKien: opts.maSuKien ?? null })),
     skipDuplicates: true,
   });
   return count;
 }
 
-/** Id các TBM của bộ môn (người nhận thông báo từ GV). */
-export async function tbmCuaBoMon(tx: Tx = db, boMonId: string | null): Promise<string[]> {
-  if (!boMonId) return [];
-  const tbms = await tx.user.findMany({ where: { role: "TBM", boMonId }, select: { id: true } });
-  return tbms.map((t) => t.id);
-}
+/** Đường dẫn trong thông báo (chuông bấm vào đi tới trang liên quan). */
+export const LINK = {
+  dauKy: (kyId: string) => `/dau-ky?kyId=${kyId}`,
+  cuoiKy: (kyId: string) => `/cuoi-ky?kyId=${kyId}`,
+  taskCuaToi: (kpiTaskId: string) => `/cuoi-ky/task/${kpiTaskId}`,
+  duyetNguoi: (userId: string, kyId: string, tab: "dang-ky" | "task" | "xin-them") =>
+    `/duyet/${userId}?kyId=${kyId}&tab=${tab}`,
+  duyetTongQuan: (kyId: string) => `/duyet?kyId=${kyId}`,
+  chot: (kyId: string) => `/chot?kyId=${kyId}`,
+};
