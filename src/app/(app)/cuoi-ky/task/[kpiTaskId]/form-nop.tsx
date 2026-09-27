@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { FileHienThi } from "@/lib/services/lich-su";
+import type { FileHienThi } from "@/components/chung/danh-sach-file";
 import { ACCEPT_FILE, hienKichThuoc, lyDoFileKhongHopLe, lyDoLinkKhongHopLe, SO_FILE_TOI_DA } from "@/lib/files";
 import { cn } from "@/lib/utils";
 

@@ -1,9 +1,8 @@
 // Lịch sử một task: các lần nộp (file, ghi chú, link, kết quả duyệt) và nhật ký hành động (LichSuTask).
 import "server-only";
 import type { HanhDongTask, TrangThaiDuyet } from "@/generated/prisma/enums";
+import type { FileHienThi } from "@/components/chung/danh-sach-file";
 import { db } from "@/lib/db";
-
-export type FileHienThi = { id: string; tenGoc: string; kichThuoc: number; mimeType: string };
 
 export type BaiNopHienThi = {
   id: string;
