@@ -120,5 +120,32 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 - Chỉ sửa được ngày của kỳ; tên, năm học, kỳ số cố định sau khi tạo.
 - Công bố là một chiều. Nút "Chốt kỳ ngay" làm ở bước 8.
 
+**Sự cố trong bước**
+- Trong lúc làm bước 4, `.gitignore` bị một tiến trình bên ngoài ghi đè bằng mẫu chung (mất các dòng `/.devdb`, `/.next`, `/src/generated`…), khiến commit bước 4 lần đầu dính ~3.700 file rác (DB dev, cache build; không có `.env`). Đã làm lại commit bước 4 (commit chưa push) và khôi phục `.gitignore` gốc, giữ thêm các dòng mới (`dist/`, `__pycache__/`, `.venv/`). Không file nào trên đĩa bị xóa.
+
 **Còn tồn**
 - Không có.
+
+## Bước 5 – Luồng KPI chung: Đầu kỳ + màn hình Duyệt tab Đăng ký ✅
+
+**Đã làm**
+- `src/lib/rules.ts` viết lại chung cho mọi cấp (bảng 10.1 + B5, B6).
+- `src/lib/services/dang-ky.ts` (một bộ code cho GV, TBM, TK, HP):
+  - `chonNhiemVu`: chỉ nhiệm vụ đúng vị trí mình; tạo Nháp, khóa dòng `DangKy` (`FOR UPDATE`) rồi kiểm tra luật
+  - `guiDangKy`: ≥1 nhiệm vụ; A3 (thiếu người duyệt hoặc người chốt → chặn); tính điểm/xếp loại theo bảng đúng vị trí; báo người duyệt
+  - `duyetDangKy` / `tuChoiDangKy`: chỉ người duyệt theo `nguoiDuyet()` (khác → 404); tính lại điểm/xếp loại; duyệt thì giao task bắt buộc (Chưa làm); từ chối bắt buộc nhận xét
+- `/dau-ky?kyId=`: một trang cho 4 vị trí; nhãn nút "Gửi lên <chức danh người duyệt>" lấy từ bảng cấu hình chuỗi; banner thiếu người (A3) và khóa nút Gửi; dropdown chọn kỳ (B7, `src/lib/services/ky.ts`).
+- Màn hình Duyệt dùng chung `/duyet?kyId=&tab=tong-quan|hang-cho`:
+  - tiêu đề theo menu ("Duyệt giáo viên", "Duyệt trưởng bộ môn", "Duyệt trưởng khoa", "Duyệt & chốt hiệu phó")
+  - ô đếm (đăng ký chờ duyệt, task chờ duyệt, đã duyệt chưa gửi lên/chưa chốt, chờ chốt, bị trả về, xin thêm chờ duyệt); với HT → HP ẩn các ô/cột không dùng (Chờ chốt, Bị trả về) và "Chưa gửi lên" đổi thành "Chưa chốt"
+  - bảng người (`src/lib/services/duyet.ts`): chỉ người mà mình là người duyệt
+- `/duyet/[nguoiId]?kyId=&tab=dang-ky|task|xin-them`: người không thuộc phạm vi duyệt → 404. Tab Đăng ký: nhiệm vụ đã chọn, điểm, xếp loại → Duyệt / Từ chối (bắt buộc nhận xét).
+- `src/lib/thong-bao.ts`: `guiThongBao(tx, nguoiNhan, noiDung, { link, maSuKien, tru })` (bỏ người thao tác – B12) + `LINK` các đường dẫn trong thông báo. `src/lib/validate.ts`: `NhanXetBatBuoc`, `NhanXetTuyChon`.
+- Test: tích hợp `tests/dang-ky.int.test.ts` 11 (4 vị trí → đúng người duyệt, người khác/người chốt không duyệt được, giao đúng task bắt buộc, thông báo; nhiệm vụ sai vị trí; HT/Admin bị chặn; 2 case phụ về ngày; từ chối bắt buộc nhận xét; hết deadline; kỳ chốt; A3 khi khoa chưa có hiệu phó); E2E `e2e/buoc-05-dau-ky.spec.ts` 6/6.
+
+**Tự chọn**
+- Gửi lại sau khi bị từ chối thì xóa nhận xét cũ; khi duyệt, nhận xét tùy chọn.
+- Người duyệt thấy tab Đăng ký "Chưa gửi danh sách đăng ký" khi người đó còn Nháp (danh sách chỉ lên người duyệt khi đã gửi).
+
+**Còn tồn**
+- Tab Hàng chờ, tab Task và minh chứng, tab Xin thêm task: bước 6.
