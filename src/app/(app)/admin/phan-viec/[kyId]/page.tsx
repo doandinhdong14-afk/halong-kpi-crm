@@ -12,6 +12,7 @@ import { ngayThanhChuoi } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { BangXepLoai } from "./bang-xep-loai";
 import { DanhSachNhiemVu, type NhiemVuHienThi } from "./danh-sach-nhiem-vu";
+import { NutChotKy } from "./nut-chot-ky";
 import { ThongTinKy } from "./thong-tin-ky";
 
 /** ?viTri=gv|tbm|tk|hp → vị trí đang xem (mặc định Giáo viên). */
@@ -91,7 +92,9 @@ export default async function TrangChiTietKy(props: PageProps<"/admin/phan-viec/
           daChot: ky.daChot,
         }}
         lyDoChuaCongBo={lyDoCongBo}
-      />
+      >
+        {ky.daCongBo && !ky.daChot && <NutChotKy kyId={ky.id} />}
+      </ThongTinKy>
 
       {/* 4 tab vị trí: GV | TBM | TK | HP */}
       <nav className="mt-6 flex flex-wrap gap-1 border-b" aria-label="Vị trí">

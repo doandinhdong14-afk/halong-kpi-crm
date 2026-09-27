@@ -8,6 +8,7 @@ import { ChonKy } from "@/components/chung/chon-ky";
 import { BadgeTrangThai } from "@/components/chung/badge-trang-thai";
 import { DemNguoc } from "@/components/chung/dem-nguoc";
 import { BieuDoTron } from "@/components/kpi/bieu-do-tron";
+import { KhoiKetQua } from "@/components/kpi/khoi-ket-qua";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { yeuCauNguoiLamKpi } from "@/lib/auth/dal";
@@ -38,7 +39,7 @@ export default async function TrangCuoiKy(props: PageProps<"/cuoi-ky">) {
     );
   }
 
-  const [dk, kpiTasks, yeuCaus, ketQuas, cc] = await Promise.all([
+  const [dk, kpiTasks, yeuCaus, ketQuas, cc, ketQuaKy] = await Promise.all([
     db.dangKy.findUnique({
       where: { kyId_userId: { kyId: ky.id, userId: u.id } },
       include: {
@@ -57,6 +58,8 @@ export default async function TrangCuoiKy(props: PageProps<"/cuoi-ky">) {
     db.yeuCauThemTask.findMany({ where: { userId: u.id, kyId: ky.id }, orderBy: { taoLuc: "desc" } }),
     taiKetQua(ky.id, [u]),
     layCoCau(),
+    // Kết quả cuối cùng (chỉ có sau khi chốt kỳ).
+    ky.daChot ? db.ketQuaKy.findUnique({ where: { kyId_userId: { kyId: ky.id, userId: u.id } } }) : null,
   ]);
   const kq = ketQuas.get(u.id)!;
   const daDuyet = dk?.trangThai === "DA_DUYET";
@@ -75,6 +78,8 @@ export default async function TrangCuoiKy(props: PageProps<"/cuoi-ky">) {
       >
         <ChonKy kyId={ky.id} kys={dsChonKy(kys)} />
       </TrangTieuDe>
+
+      {ky.daChot && <KhoiKetQua ketQua={ketQuaKy} />}
 
       {!daDuyet ? (
         !ky.daChot && (

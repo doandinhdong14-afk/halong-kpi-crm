@@ -192,3 +192,26 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 8 – Chốt kỳ + kết quả + nhắc việc ✅
+
+**Đã làm**
+- `src/lib/services/chot-ky.ts`:
+  - `chotKy(kyId)`: một transaction; đặt `daChot` có điều kiện (chạy hai lần không nhân đôi); tính kết quả cho **mọi tài khoản đang là GV, TBM, TK, HP** bằng hàm dùng chung `taiKetQua`/`tinhKetQuaThuan`; upsert `KetQuaKy` (kèm `doiTuong`, `taskThieu` có lý do, `taskVuot`, `soTreo`); thông báo kết quả cho từng người làm KPI, thông báo chung cho HT
+  - `chotCacKyQuaHan()`: chỉ kỳ đã công bố và quá deadline (B19)
+- `src/lib/services/nhac-viec.ts` (B12): hạn đăng ký còn ≤3 ngày → người chưa gửi; deadline còn ≤7 ngày → người còn task bắt buộc chưa chốt; mốc 7 ngày (2 < N ≤ 7) và 2 ngày (N ≤ 2) → người duyệt "Còn N task đã duyệt chưa gửi lên" (HT với task HP: "chưa chốt"), người chốt "Còn N task chờ chốt". Chống trùng bằng `maSuKien`, chỉ gửi khi N > 0.
+- `POST /api/cron/chot-ky` (header `Authorization: Bearer <CRON_SECRET>`, so sánh timing-safe): chốt kỳ quá hạn + nhắc việc.
+- Admin: nút **Chốt kỳ ngay** (có xác nhận) trên trang chi tiết kỳ.
+- Kết quả: `/cuoi-ky` hiện khối Kết quả sau khi chốt kỳ (kết quả thực hiện + xếp loại đăng ký, % hoàn thành, task còn thiếu kèm lý do mục 5.4, task làm vượt); trước khi chốt không hiện (người làm KPI chỉ thấy kết quả cuối cùng). Màn hình Duyệt thêm cột **Kết quả** khi kỳ đã chốt.
+- Test:
+  - tích hợp `tests/kich-ban-15.int.test.ts` 12: **toàn bộ kịch bản chính mục 15 qua action/API thật** (6 người → Không đạt – A1 với 11 task "Chưa nộp minh chứng"; Đạt – C; Vượt chỉ tiêu – B với đúng 2 task vượt, task mở rộng chỉ duyệt không tính; Đạt – B; Đạt – A1; Đạt – B), case treo đến hết kỳ (lý do đúng), không đăng ký → Không đạt – F + ghi chú, sau chốt mọi thao tác bị khóa, thông báo; cron sai secret → 401, chỉ chốt kỳ quá hạn, chạy lại không chốt lại; nhắc việc đúng người, không trùng, mốc 2 ngày gửi thêm
+  - E2E `e2e/buoc-08-kich-ban-15.spec.ts` 9/9: trạng thái cuối kịch bản dựng bằng SQL, admin bấm Chốt kỳ ngay trên giao diện, 6 tài khoản thấy đúng kết quả, TBM thấy cột Kết quả, thao tác bị khóa
+  - **Hồi quy toàn bộ: unit 52, tích hợp 59, E2E 53 – tất cả pass.**
+
+**Tự chọn**
+- Người làm KPI tạo sau khi chốt kỳ không có kết quả ("Kỳ đã chốt nhưng không có kết quả cho tài khoản của bạn").
+- "Kỳ đã chốt" gửi cho người làm KPI (kèm kết quả của họ) và HT; TBM/TK/HP đã nhận thông báo kết quả của chính mình nên không gửi thêm thông báo thứ hai.
+- E2E bước 8 dựng dữ liệu bằng SQL cho nhanh; chuỗi thao tác đầy đủ đã kiểm ở test tích hợp và E2E bước 5–7.
+
+**Còn tồn**
+- Không có.

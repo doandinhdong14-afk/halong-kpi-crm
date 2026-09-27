@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { yeuCauVaiTro } from "@/lib/auth/dal";
 import { CHUOI, nhanDaDuyetChuaXong, viTriDuocDuyet } from "@/lib/kpi/chuoi";
 import { tenMuc } from "@/lib/menu";
-import { NHAN_DANG_KY } from "@/lib/nhan";
+import { NHAN_DANG_KY, NHAN_KET_QUA } from "@/lib/nhan";
 import { TEN_VAI_TRO } from "@/lib/roles";
 import { hienPhanTram } from "@/lib/ket-qua";
 import { tongQuanDuyet } from "@/lib/services/duyet";
@@ -104,13 +104,14 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
                   {!gop && <TableHead className="text-right">Chờ chốt</TableHead>}
                   {!gop && <TableHead className="text-right">Bị trả về</TableHead>}
                   <TableHead className="text-right">Xin thêm chờ duyệt</TableHead>
+                  {ky.daChot && <TableHead>Kết quả</TableHead>}
                   <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {dong.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
                       Chưa có ai trong phạm vi duyệt của bạn.
                     </TableCell>
                   </TableRow>
@@ -143,6 +144,11 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
                     {!gop && <TableCell className="text-right tabular-nums">{d.demTask.CHO_CHOT ?? 0}</TableCell>}
                     {!gop && <TableCell className="text-right tabular-nums">{d.demTask.TRA_VE ?? 0}</TableCell>}
                     <TableCell className="text-right tabular-nums">{d.xinThemChoDuyet}</TableCell>
+                    {ky.daChot && (
+                      <TableCell data-cot="ket-qua" className="font-medium">
+                        {d.ketQuaKy ? `${NHAN_KET_QUA[d.ketQuaKy.ketQua]} – ${d.ketQuaKy.xepLoai}` : "—"}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Link href={`/duyet/${d.nguoi.id}?kyId=${ky.id}`} className="text-sm font-medium text-primary hover:underline">
                         Xem
