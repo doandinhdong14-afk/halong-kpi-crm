@@ -215,3 +215,28 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 9 – Xuất báo cáo Excel/PDF (4 cấp) ✅
+
+**Đã làm**
+- Thư viện: `exceljs@4.4.0`, `pdfmake@0.3.11` (thêm `serverExternalPackages` trong `next.config.ts`); dev: `@types/pdfmake`, `pdfjs-dist` (chỉ để test trích chữ từ PDF).
+- `src/lib/bao-cao/`:
+  - `du-lieu.ts`: dữ liệu theo phạm vi `phamViBaoCao` (TBM: GV bộ môn; TK: GV + TBM của khoa; HP: GV + TBM + TK các khoa phụ trách; HT: cả 4 vị trí toàn trường), không gồm người xuất; kỳ chưa chốt tính bằng hàm dùng chung `taiKetQua` (TẠM TÍNH), đã chốt lấy `KetQuaKy`
+  - `excel.ts`: 3 sheet **Đăng ký nhiệm vụ | Kết quả | Chi tiết task** đúng cột mục 6.3; dòng đầu ghi tiêu đề + "(TẠM TÍNH)"; cột Tình trạng "Tạm tính / Đã chốt kỳ"
+  - `pdf.ts`: A4 ngang, quốc hiệu, "Quảng Ninh, ngày … tháng … năm …" (hằng số `DIA_DANH` ở `src/lib/cau-hinh.ts`), dòng KHOA (TBM, TK) và BỘ MÔN (chỉ TBM), tiêu đề "BÁO CÁO KẾT QUẢ THỰC HIỆN NHIỆM VỤ – KỲ n NĂM HỌC …", "(TẠM TÍNH)" khi chưa chốt, khối chữ ký theo người xuất (TRƯỞNG BỘ MÔN / TRƯỞNG KHOA / KT. HIỆU TRƯỞNG – PHÓ HIỆU TRƯỞNG / HIỆU TRƯỞNG). Tất cả: bảng Kết quả + bảng Đăng ký; 1 người: thông tin + nhiệm vụ đã đăng ký + chi tiết task + kết quả
+  - `ten-file.ts`: `BaoCao_<DonVi>_Ky<n>-<namHoc>_<YYYYMMDD>[_TamTinh]` (B15)
+- `GET /api/bao-cao?kyId=&viTri=…&nguoiId=&dinhDang=xlsx|pdf` (chặn ở server: vai trò, phạm vi, người ngoài phạm vi → 403).
+- `/bao-cao`: chọn kỳ → tick chức vụ trong phạm vi → Tất cả / 1 người → Xuất Excel / Xuất PDF; ghi chú TẠM TÍNH khi kỳ chưa chốt.
+- Test:
+  - unit `ten-file` 2
+  - tích hợp `tests/bao-cao.int.test.ts` 9: phạm vi đúng cho TBM/TK/HP/HT; chức vụ ngoài phạm vi, người ngoài phạm vi, GV/Admin bị chặn; Excel đủ 3 sheet đúng cột, % chỉ đếm task đã chốt, tạm tính; **PDF trích chữ bằng pdf.js ra đúng tiếng Việt** (quốc hiệu, tiêu đề, tên người), A4 ngang, font Roboto nhúng, khối chữ ký đúng từng cấp, dòng KHOA/BỘ MÔN đúng; 1 người; sau chốt kỳ hết "TẠM TÍNH", tên file không còn `_TamTinh`
+  - E2E `e2e/buoc-09-bao-cao.spec.ts` 3/3 (tải file thật qua trình duyệt, đúng tên file). Đã render PDF ra ảnh để xem bố cục bằng mắt.
+
+**Tự chọn**
+- **Font: Roboto 3.014** (kèm gói pdfmake, giấy phép OFL) thay cho Noto Sans: đặc tả cho phép một trong hai, đã kiểm tra đủ glyph tiếng Việt bằng fontkit. File TTF chép vào `assets/fonts/Roboto/` (không phụ thuộc đường dẫn trong node_modules); CLAUDE.md đã cập nhật.
+- Tiêu đề mục (I., II., III.) nằm ngay trong bảng nên không bị lẻ cuối trang; bảng không cắt một dòng ra hai trang và lặp lại dòng tiêu đề cột khi sang trang.
+- Ngày giờ trong Excel ghi dạng chữ `HH:mm dd/MM/yyyy` giờ VN (tránh lệch múi giờ khi mở file).
+- Tên file "1 người" dùng cùng mẫu với "Tất cả" (đặc tả chỉ nêu một mẫu).
+
+**Còn tồn**
+- Không có.

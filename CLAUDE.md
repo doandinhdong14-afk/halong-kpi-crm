@@ -14,7 +14,7 @@ Chỗ đặc tả chưa rõ: chọn cách đơn giản nhất, ghi vào `NOTES.m
 - PostgreSQL + Prisma 7. Schema theo mục 12.1: được chỉnh chi tiết nhưng phải giữ ý nghĩa; chỗ chỉnh ghi vào `NOTES.md`.
 - Đăng nhập: session cookie tự làm (httpOnly, ký bằng `AUTH_SECRET`); mật khẩu hash bcrypt
 - Tailwind CSS + shadcn/ui; biểu đồ tròn dùng Recharts
-- Xuất Excel: exceljs. Xuất PDF: pdfmake, **bắt buộc nhúng font có tiếng Việt** (Noto Sans, file TTF nằm trong repo)
+- Xuất Excel: exceljs. Xuất PDF: pdfmake, **bắt buộc nhúng font có tiếng Việt** (Roboto, file TTF trong `assets/fonts/`)
 - File lưu trên ổ đĩa server tại `UPLOAD_DIR`, chỉ đọc/ghi qua lớp `src/lib/storage`
 - Deploy trên Railway: app + PostgreSQL + Volume + Cron
 - Biến môi trường: `DATABASE_URL`, `AUTH_SECRET`, `UPLOAD_DIR`, `CRON_SECRET`, `TZ=Asia/Ho_Chi_Minh`
