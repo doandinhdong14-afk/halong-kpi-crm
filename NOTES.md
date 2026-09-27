@@ -65,3 +65,28 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Chuông thông báo mới là nút giữ chỗ (làm ở bước 8).
+
+## Bước 2 – Admin: Quản lý đăng nhập ✅
+
+**Đã làm**
+- `/admin/tai-khoan`:
+  - bảng Tên đăng nhập | Chức vụ | Tên người | Mật khẩu | Sửa
+  - tìm theo tên hoặc tên đăng nhập, lọc theo chức vụ (qua URL `?q=&chucVu=`)
+- Dialog Thêm/Sửa:
+  - xem trước tên đăng nhập (sinh ở server, đã kiểm tra trùng)
+  - nút Đặt lại mật khẩu (về 123456)
+  - khi đổi tên thì báo tên đăng nhập mới cho admin
+- Xóa: hộp xác nhận ghi "Xóa sẽ mất toàn bộ dữ liệu KPI của tài khoản này". Xóa luôn file minh chứng trên ổ đĩa.
+- Server chặn: chỉ ADMIN; không tự xóa; không tự bỏ vai trò ADMIN; họ tên bỏ dấu rỗng → lỗi. Lỗi trùng unique (P2002) → thông báo tiếng Việt.
+- Lớp lưu file `src/lib/storage` (ổ đĩa, `UPLOAD_DIR`) làm sớm để xóa tài khoản dọn được file.
+- Test:
+  - E2E `e2e/buoc-2-tai-khoan.spec.ts`: 9/9
+  - Test tích hợp mới `tests/*.int.test.ts` (`npm run test:int`): gọi thẳng server action trên DB test, giả lập phiên. `tai-khoan.int.test.ts`: 4/4 (GV gọi action admin bị chặn, tự hạ chức/tự xóa bị chặn, gv.tranthibinh → tbm.tranthibinh)
+
+**Tự chọn**
+- Sửa mà không đổi họ tên hay chức vụ thì giữ nguyên tên đăng nhập. Có đổi thì sinh lại từ đầu (vd `gv.nguyenvannam2` lên TBM → `tbm.nguyenvannam` nếu còn trống).
+- Tự đổi họ tên của chính admin thì được (tên đăng nhập đổi theo).
+- Cột Mật khẩu hiện `••••••` khi không còn mật khẩu mặc định (v1.1 chưa có trường hợp này).
+
+**Còn tồn**
+- Không có.
