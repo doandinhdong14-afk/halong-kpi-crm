@@ -342,3 +342,8 @@ Lần deploy đầu, bước pre-deploy sẽ tạo bảng và seed dữ liệu d
 
 **Chưa kiểm chứng được ở máy**
 - Chưa chạy thật trên Railway (không có tài khoản). Nếu dashboard báo `preDeployCommand`/`cronSchedule` sai định dạng, chỉnh trực tiếp trong Settings: Pre-deploy `npm run release`; cron `5 17 * * *`, start `npm run cron:chot-ky`.
+
+## Ngoài 9 bước – Trang giới thiệu (landing) `/gioi-thieu`
+- **Vấn đề:** cần trang giới thiệu công khai; đặc tả không có.
+- **Quyết định:** thêm `src/app/gioi-thieu/page.tsx`, chỉ hiển thị tĩnh (không đọc DB, không đọc phiên). `src/proxy.ts` cho phép khách chưa đăng nhập vào đúng đường dẫn này, cùng với `/dang-nhap`. Matcher của proxy bỏ qua file ảnh tĩnh (`.png/.jpg/.jpeg/.svg/.webp`) để khách tải được logo (`public/logo-dhhl*.png`); `public/` chỉ chứa ảnh giao diện, file minh chứng vẫn ở `UPLOAD_DIR` qua `/api/files`. `/` và mọi trang khác giữ nguyên hành vi.
+- **Lý do:** không đụng luồng nghiệp vụ/kiểm tra quyền; bảng minh họa trên trang là hình vẽ với dữ liệu mẫu.

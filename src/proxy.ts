@@ -7,14 +7,15 @@ import { TEN_COOKIE, docToken } from "@/lib/auth/jwt";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const userId = await docToken(request.cookies.get(TEN_COOKIE)?.value);
-  const laTrangDangNhap = pathname === "/dang-nhap";
+  const laTrangCongKhai = pathname === "/dang-nhap" || pathname === "/gioi-thieu";
 
-  if (!userId && !laTrangDangNhap) {
+  if (!userId && !laTrangCongKhai) {
     return NextResponse.redirect(new URL("/dang-nhap", request.url));
   }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // Ảnh tĩnh trong public/ (logo trang giới thiệu) không cần đăng nhập.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp)$).*)"],
 };
