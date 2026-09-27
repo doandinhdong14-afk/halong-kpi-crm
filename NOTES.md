@@ -103,3 +103,22 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 4 – Admin: Phân việc đầu kỳ (4 vị trí) ✅
+
+**Đã làm**
+- `/admin/phan-viec`: danh sách kỳ, cột "Số nhiệm vụ (GV · TBM · TK · HP)". Dialog Tạo kỳ: tên, năm học, kỳ số 1–4, ngày bắt đầu/kết thúc, **Sao chép từ kỳ trước** (chép nhiệm vụ, task, bảng xếp loại cả 4 vị trí).
+- `/admin/phan-viec/[kyId]?viTri=gv|tbm|tk|hp`:
+  - khối thông tin kỳ: sửa ngày, hạn đăng ký/deadline, nút **Công bố** (có xác nhận); chưa công bố được thì ghi rõ lý do
+  - 4 tab vị trí **Giáo viên | Trưởng bộ môn | Trưởng khoa | Hiệu phó** (kèm số nhiệm vụ, biểu tượng cảnh báo nếu vị trí chưa có bảng xếp loại)
+  - trong mỗi vị trí: tab Nhiệm vụ & task (thêm/sửa/xóa, cảnh báo nhiệm vụ chưa có task bắt buộc) và tab Bảng xếp loại (sửa cả bảng, lưu một lần)
+- `src/lib/services/phan-viec.ts`: `layKyChuaChot`, `saoChepKy`, `lyDoChuaCongBoDuoc` (B13), các hàm kiểm tra khóa.
+- Server chặn: chỉ ADMIN; vị trí phải là GV/TBM/TK/HP; kỳ đã chốt khóa mọi thay đổi (kể cả sửa ngày); trùng (năm học, kỳ số); ngày kết thúc ≥ ngày bắt đầu; công bố cần ≥1 nhiệm vụ và đủ 4 bảng xếp loại; kỳ đã công bố không xóa hết bậc của một vị trí; tên/ngưỡng bậc không trùng trong một vị trí; nhiệm vụ đã có người đăng ký (mọi trạng thái) → không xóa, không sửa điểm; task đã có người làm/xin → không xóa, không đổi loại; nhiệm vụ đã có đăng ký Đã duyệt → không thêm task bắt buộc.
+- Test: tích hợp `tests/phan-viec.int.test.ts` 8; E2E `e2e/buoc-04-phan-viec.spec.ts` 4/4.
+
+**Tự chọn**
+- Chỉ sửa được ngày của kỳ; tên, năm học, kỳ số cố định sau khi tạo.
+- Công bố là một chiều. Nút "Chốt kỳ ngay" làm ở bước 8.
+
+**Còn tồn**
+- Không có.

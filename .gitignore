@@ -50,3 +50,8 @@ next-env.d.ts
 /uploads-test
 /test-results
 /playwright-report
+
+# thêm từ mẫu chung (giữ lại)
+dist/
+__pycache__/
+.venv/
