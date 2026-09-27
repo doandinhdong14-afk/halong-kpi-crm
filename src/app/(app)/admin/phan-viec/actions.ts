@@ -88,10 +88,9 @@ export async function congBoKy(kyId: string) {
     await db.$transaction(async (tx) => {
       const ky = await layKyChuaChot(tx, kyId);
       if (ky.daCongBo) throw new LoiNghiepVu("Kỳ đã được công bố.", 409);
-      const [soNv, soBac] = await Promise.all([
-        tx.nhiemVu.count({ where: { kyId } }),
-        tx.bacXepLoai.count({ where: { kyId } }),
-      ]);
+      // Trong transaction: chạy tuần tự (một connection).
+      const soNv = await tx.nhiemVu.count({ where: { kyId } });
+      const soBac = await tx.bacXepLoai.count({ where: { kyId } });
       if (!soNv) throw new LoiNghiepVu("Cần có ít nhất 1 nhiệm vụ trước khi công bố.");
       if (!soBac) throw new LoiNghiepVu("Cần có bảng xếp loại (ít nhất 1 bậc) trước khi công bố.");
       await tx.ky.update({ where: { id: kyId }, data: { daCongBo: true } });

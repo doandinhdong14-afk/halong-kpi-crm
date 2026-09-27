@@ -117,3 +117,37 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 4 – GV Đầu kỳ + TBM Duyệt đăng ký ✅
+
+**Đã làm**
+- Thư viện nghiệp vụ:
+  - `src/lib/rules.ts`: bảng 9.1 + A1/A2; mỗi hàm trả lý do chặn, dùng chung cho server và giao diện
+  - `src/lib/xep-loai.ts`
+  - `src/lib/ky-hien-tai.ts`
+  - `src/lib/thong-bao.ts`: `guiThongBao`, `tbmCuaBoMon`
+  - `src/lib/nhan.ts`: nhãn trạng thái
+- `/gv/dau-ky?kyId=`:
+  - dropdown chọn kỳ (A4)
+  - hiện hạn đăng ký/deadline, đồng hồ đếm ngược (tới hạn đăng ký; khi Bị từ chối thì tới deadline)
+  - thẻ nhiệm vụ (điểm, task bắt buộc/mở rộng), tick để tự lưu
+  - thanh tổng kết cố định: số nhiệm vụ, tổng điểm, xếp loại dự kiến
+  - banner trạng thái kèm nhận xét TBM; nút Gửi có xác nhận
+- `/tbm/duyet-dang-ky`: bảng Chờ duyệt + bảng Đã xử lý. `/tbm/duyet-dang-ky/[id]`: xem nhiệm vụ đã chọn, điểm, xếp loại; nút Duyệt (nhận xét tùy chọn) / Từ chối (bắt buộc nhận xét).
+- Duyệt: tính lại điểm và xếp loại (mục 9.2), giao GvTask cho mọi task bắt buộc (Chưa làm), thông báo GV. Từ chối: thông báo GV. GV gửi: thông báo các TBM cùng bộ môn.
+- Server chặn:
+  - vai trò; TBM chỉ xử lý GV cùng bộ môn (khác bộ môn → 404)
+  - luật thời gian theo 9.1 + A1 (kỳ chưa công bố hoặc đã chốt → chặn)
+  - chuyển trạng thái bằng `updateMany where trangThai`; tick khóa dòng `DangKy` bằng `SELECT … FOR UPDATE`
+- Test:
+  - unit: `rules`, `xep-loai`, `ky-hien-tai` (tổng 20)
+  - tích hợp `tests/dang-ky.int.test.ts`: 7/7 (gồm case phụ "ngày bắt đầu = hôm qua", "từ chối sau ngày bắt đầu vẫn gửi lại", hết deadline, kỳ chốt, TBM khác bộ môn)
+  - E2E `e2e/buoc-4-dang-ky.spec.ts`: 5/5
+
+**Tự chọn**
+- Gửi lại sau khi bị từ chối thì xóa nhận xét cũ; khi duyệt, TBM ghi nhận xét tùy chọn.
+- TBM thấy danh sách Chờ duyệt của mọi kỳ chưa chốt (có cột Kỳ), không cần chọn kỳ.
+- Nút Gửi khóa trong lúc còn thao tác tick chưa lưu xong.
+
+**Còn tồn / ghi chú kỹ thuật**
+- Cảnh báo `pg` "client.query() when the client is already executing a query" đến từ bên trong Prisma 7 (query interpreter chạy song song trong transaction), không phải code dự án; vô hại với `pg` 8. Không nâng `pg` lên 9 cho tới khi Prisma sửa.

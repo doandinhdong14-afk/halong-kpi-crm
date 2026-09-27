@@ -52,6 +52,7 @@ export async function nhiemVuDaCoDangKyDuyet(tx: Tx, nhiemVuId: string) {
 
 /** Task đã có GV làm hoặc xin làm. */
 export async function taskDaCoNguoiLam(tx: Tx, taskId: string) {
-  const [gv, yc] = await Promise.all([tx.gvTask.count({ where: { taskId } }), tx.yeuCauThemTask.count({ where: { taskId } })]);
+  const gv = await tx.gvTask.count({ where: { taskId } });
+  const yc = await tx.yeuCauThemTask.count({ where: { taskId } });
   return gv + yc > 0;
 }
