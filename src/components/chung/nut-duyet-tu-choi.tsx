@@ -108,7 +108,7 @@ function DialogNhanXet<T>({
           <DialogHeader>
             <DialogTitle>{laDuyet ? `Duyệt ${doiTuong}` : `Từ chối ${doiTuong}`}</DialogTitle>
             <DialogDescription>
-              {laDuyet ? "Có thể ghi nhận xét (không bắt buộc)." : "Bắt buộc nhập nhận xét để giáo viên biết cần sửa gì."}
+              {laDuyet ? "Có thể ghi nhận xét (không bắt buộc)." : "Bắt buộc nhập nhận xét để người làm KPI biết cần sửa gì."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

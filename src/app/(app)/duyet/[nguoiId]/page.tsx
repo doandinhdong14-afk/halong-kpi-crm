@@ -1,0 +1,77 @@
+// Trang chi tiết 1 người trên màn hình Duyệt (mục 6.1), 3 tab: Đăng ký nhiệm vụ | Task và minh chứng | Xin thêm task.
+// Chỉ mở được người mà mình là người duyệt (theo cơ cấu hiện tại), người khác → 404.
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
+import { TrangTieuDe } from "@/components/chung/trang-tieu-de";
+import { ChonKy } from "@/components/chung/chon-ky";
+import { yeuCauVaiTro } from "@/lib/auth/dal";
+import { tenDonVi } from "@/lib/co-cau";
+import { TEN_VAI_TRO } from "@/lib/roles";
+import { layCoCau } from "@/lib/services/co-cau";
+import { layNguoiDuocDuyet } from "@/lib/services/duyet";
+import { dsChonKy, layKyTheoUrl } from "@/lib/services/ky";
+import { cn } from "@/lib/utils";
+import { TabDangKy } from "./tab-dang-ky";
+
+const TABS = [
+  { id: "dang-ky", nhan: "Đăng ký nhiệm vụ" },
+  { id: "task", nhan: "Task và minh chứng" },
+  { id: "xin-them", nhan: "Xin thêm task" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+export default async function TrangDuyetMotNguoi(props: PageProps<"/duyet/[nguoiId]">) {
+  const m = await yeuCauVaiTro("TBM", "TK", "HP", "HT");
+  const { nguoiId } = await props.params;
+  const nguoi = await layNguoiDuocDuyet(m, nguoiId);
+  if (!nguoi) notFound();
+
+  const sp = await props.searchParams;
+  const tab: Tab = TABS.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : "dang-ky";
+  const { kys, ky } = await layKyTheoUrl(sp.kyId);
+  const cc = await layCoCau();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Link
+          href={ky ? `/duyet?kyId=${ky.id}` : "/duyet"}
+          className="mb-2 inline-flex items-center text-sm text-muted-foreground hover:underline"
+        >
+          <ChevronLeft className="size-4" /> Tổng quan
+        </Link>
+        <TrangTieuDe
+          tieuDe={nguoi.hoTen}
+          moTa={`${nguoi.username} · ${TEN_VAI_TRO[nguoi.role]} · ${tenDonVi(nguoi, cc)}${ky ? ` · ${ky.ten}` : ""}`}
+        >
+          {ky && <ChonKy kyId={ky.id} kys={dsChonKy(kys)} />}
+        </TrangTieuDe>
+      </div>
+
+      {!ky ? (
+        <p className="text-muted-foreground">Chưa có kỳ nào được công bố.</p>
+      ) : (
+        <>
+          <nav className="flex flex-wrap gap-1 border-b" aria-label="Các tab">
+            {TABS.map((t) => (
+              <Link
+                key={t.id}
+                href={`/duyet/${nguoi.id}?kyId=${ky.id}&tab=${t.id}`}
+                className={cn(
+                  "-mb-px border-b-2 px-3 py-2 text-sm font-medium",
+                  t.id === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+                aria-current={t.id === tab ? "page" : undefined}
+              >
+                {t.nhan}
+              </Link>
+            ))}
+          </nav>
+          {tab === "dang-ky" && <TabDangKy ky={ky} userId={nguoi.id} />}
+          {tab !== "dang-ky" && <p className="text-muted-foreground">Sẽ hoàn thiện ở bước 6.</p>}
+        </>
+      )}
+    </div>
+  );
+}
