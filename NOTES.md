@@ -246,3 +246,32 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 8 – Admin Xem cấu hình + Thông báo ✅
+
+**Đã làm**
+- `/admin/cau-hinh?tab=…&kyId=…` (chỉ xem, không có nút sửa/xóa/duyệt), 6 tab:
+  - Kỳ và bảng xếp loại
+  - Tài khoản
+  - Đăng ký nhiệm vụ của từng GV: trạng thái, số nhiệm vụ, tổng điểm, xếp loại, thời điểm gửi/duyệt, nhận xét TBM
+  - Tiến độ & minh chứng: %, số task theo trạng thái, task vượt; link sang `/admin/cau-hinh/tien-do/[gvId]` gồm biểu đồ và lịch sử nộp từng task, mở/tải file
+  - Kết quả các kỳ (dùng lại `BangKetQua`)
+  - Giấy tờ đã ban hành: x/y đã xem; link sang `/admin/cau-hinh/giay-to/[id]` (ai đã xem, ai chưa; admin xem ở đây không bị tính là đã xem)
+- Tab là link URL (server render từng tab). `ChonKy` giữ các tham số URL khác khi đổi kỳ.
+- Thông báo:
+  - `GET /api/thong-bao`: 20 thông báo mới nhất + số chưa đọc, chỉ của mình
+  - action `docThongBao`, `docTatCaThongBao` (chỉ tác động thông báo của mình)
+  - chuông ở header: huy hiệu số chưa đọc, popover danh sách, bấm vào → đánh dấu đã đọc và đi tới trang liên quan. Tự tải lại khi mở trang, khi đổi đường dẫn, khi mở chuông, mỗi 60 giây
+- Nhắc hạn `src/lib/services/nhac-han.ts` (chạy trong cron `/api/cron/chot-ky`):
+  - hạn đăng ký còn ≤3 ngày → GV chưa gửi
+  - deadline còn ≤7 ngày → GV còn task bắt buộc chưa Đã duyệt
+  - chống trùng bằng `ThongBao.maSuKien`
+- Đủ các sự kiện mục 10 (kiểm tra rải trong test các bước 4–8): gửi đăng ký/nộp task/xin thêm → TBM; duyệt/từ chối đăng ký, task, yêu cầu → GV; nhắc hạn → GV; kỳ chốt → GV, TBM; giấy tờ mới → người được tick.
+- Test: tích hợp `thong-bao.int.test.ts` 3; E2E `buoc-8-cau-hinh-thong-bao.spec.ts` 4/4. **Hồi quy toàn bộ: unit 30, tích hợp 40, E2E 55: tất cả pass.**
+
+**Tự chọn**
+- Nội dung nhắc: "Còn N ngày…", ngày cuối là "Hôm nay là ngày cuối…".
+- Không có trang "tất cả thông báo" riêng; chuông hiện 20 thông báo mới nhất.
+
+**Còn tồn**
+- Không có.

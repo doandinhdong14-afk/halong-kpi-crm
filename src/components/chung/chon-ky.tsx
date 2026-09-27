@@ -1,14 +1,22 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-/** Dropdown chọn kỳ, đổi ?kyId= trên URL. */
+/** Dropdown chọn kỳ, đổi ?kyId= trên URL (giữ các tham số khác, vd ?tab=). */
 export function ChonKy({ kys, kyId }: { kys: { id: string; ten: string; nhanPhu?: string }[]; kyId: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   return (
-    <Select value={kyId} onValueChange={(v) => router.push(`${pathname}?kyId=${v}`)}>
+    <Select
+      value={kyId}
+      onValueChange={(v) => {
+        const p = new URLSearchParams(searchParams);
+        p.set("kyId", v);
+        router.push(`${pathname}?${p.toString()}`);
+      }}
+    >
       <SelectTrigger className="w-72" aria-label="Chọn kỳ">
         <SelectValue />
       </SelectTrigger>
