@@ -18,11 +18,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useHanhDong } from "@/components/chung/use-hanh-dong";
 import { TEN_VAI_TRO } from "@/lib/roles";
 import { xoaTaiKhoan } from "./actions";
-import { DialogTaiKhoan } from "./dialog-tai-khoan";
+import { DialogTaiKhoan, type KhoaChon } from "./dialog-tai-khoan";
 
-type Dong = { id: string; username: string; hoTen: string; role: Role; isDefaultPassword: boolean };
+type Dong = {
+  id: string;
+  username: string;
+  hoTen: string;
+  role: Role;
+  isDefaultPassword: boolean;
+  donVi: string | null;
+  khoaPhuTrachIds: string[];
+};
 
-export function BangTaiKhoan({ users, adminId }: { users: Dong[]; adminId: string }) {
+export function BangTaiKhoan({ users, adminId, khoas }: { users: Dong[]; adminId: string; khoas: KhoaChon[] }) {
   return (
     <div className="rounded-lg border bg-background">
       <Table>
@@ -46,12 +54,15 @@ export function BangTaiKhoan({ users, adminId }: { users: Dong[]; adminId: strin
           {users.map((u) => (
             <TableRow key={u.id} data-username={u.username}>
               <TableCell className="font-mono">{u.username}</TableCell>
-              <TableCell>{TEN_VAI_TRO[u.role]}</TableCell>
+              <TableCell>
+                <div>{TEN_VAI_TRO[u.role]}</div>
+                {u.donVi && <div className="text-xs text-muted-foreground" data-testid="don-vi">{u.donVi}</div>}
+              </TableCell>
               <TableCell>{u.hoTen}</TableCell>
               <TableCell className="font-mono">{u.isDefaultPassword ? "123456" : "••••••"}</TableCell>
               <TableCell>
                 <div className="flex gap-1">
-                  <DialogTaiKhoan cheDo="sua" user={u} laChinhMinh={u.id === adminId} />
+                  <DialogTaiKhoan cheDo="sua" user={u} laChinhMinh={u.id === adminId} khoas={khoas} />
                   <NutXoa user={u} disabled={u.id === adminId} />
                 </div>
               </TableCell>
@@ -82,6 +93,7 @@ function NutXoa({ user, disabled }: { user: Dong; disabled: boolean }) {
           <AlertDialogTitle>Xóa tài khoản {user.username}?</AlertDialogTitle>
           <AlertDialogDescription>
             Xóa sẽ mất toàn bộ dữ liệu KPI của tài khoản này. Thao tác không thể hoàn tác.
+            {user.role === "HP" && " Các khoa hiệu phó này phụ trách sẽ thành \"chưa có hiệu phó\"."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -80,3 +80,26 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 3 – Admin: Quản lý đăng nhập ✅
+
+**Đã làm**
+- `/admin/tai-khoan`: bảng Tên đăng nhập | Chức vụ | Tên người | Mật khẩu | Sửa; dưới chức vụ ghi đơn vị (bộ môn / khoa / "Phụ trách: …" với hiệu phó); tìm theo tên, lọc theo chức vụ.
+- Dialog Thêm/Sửa: xem trước tên đăng nhập (sinh ở server); chức vụ Hiệu phó có ô chọn nhiều **Khoa phụ trách** (chỉ khoa chưa có hiệu phó + khoa người đó đang phụ trách, khoa của hiệu phó khác ghi rõ tên); nút Đặt lại mật khẩu; đổi tên đăng nhập thì báo tên mới.
+- `src/lib/services/tai-khoan.ts`:
+  - `donViTheoVaiTro` (B16): GV/TBM → bộ môn duy nhất, TK → khoa duy nhất, còn lại bỏ đơn vị
+  - `kiemTraGioiHan` (2.4): 1 TBM/bộ môn, 1 TK/khoa, 1 HT; lỗi ghi rõ người đang giữ chức
+  - `ganKhoaPhuTrach`: khoa đã có hiệu phó khác → chặn; cập nhật có điều kiện
+  - `soKyCoKpiChuaChot`, `xoaKpiKyChuaChot` (A2)
+- Server chặn: chỉ ADMIN; không tự xóa, không tự hạ chức; đổi chức vụ khi có KPI ở kỳ chưa chốt phải có `xacNhanXoaKpi` (dialog hiện cảnh báo + ô tick bắt buộc); hiệu phó rời chức → các khoa thành "chưa có hiệu phó"; xóa tài khoản xóa luôn file minh chứng trên ổ đĩa. Thêm/sửa chạy tuần tự bằng `pg_advisory_xact_lock` để hai admin không vượt giới hạn cùng lúc.
+- Test:
+  - tích hợp `tests/tai-khoan.int.test.ts` 10: quyền, tự hạ chức/tự xóa, gán đơn vị, 4 case phụ "cơ cấu và tài khoản" mục 15 (đổi `gv.tranthibinh` lên TBM bị chặn → hạ `tbm.phamthibich` → lên được `tbm.tranthibinh`; xóa HP → TBM/TK bị chặn gửi + admin có cảnh báo; tạo HP mới gán khoa → chạy lại; GV trùng tên → số 2), giới hạn TK/HT/HP, A2
+  - E2E `e2e/buoc-03-tai-khoan.spec.ts` 6/6
+
+**Tự chọn**
+- Hiệu phó được phép không phụ trách khoa nào (nhiều hiệu phó được phép).
+- Sửa mà không đổi họ tên hay chức vụ thì giữ nguyên tên đăng nhập.
+- `pg_advisory_xact_lock` trả kiểu `void` mà adapter pg của Prisma không đọc được → gọi dạng `SELECT 1 FROM pg_advisory_xact_lock(...)`.
+
+**Còn tồn**
+- Không có.
