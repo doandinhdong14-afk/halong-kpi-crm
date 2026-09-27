@@ -12,6 +12,7 @@ export type NguoiDung = {
   hoTen: string;
   role: Role;
   boMonId: string | null;
+  khoaId: string | null;
 };
 
 /** User hiện tại, đọc lại từ DB mỗi request (đổi chức vụ / xóa tài khoản có hiệu lực ngay). */
@@ -20,7 +21,7 @@ export const layNguoiDung = cache(async (): Promise<NguoiDung | null> => {
   if (!id) return null;
   return db.user.findUnique({
     where: { id },
-    select: { id: true, username: true, hoTen: true, role: true, boMonId: true },
+    select: { id: true, username: true, hoTen: true, role: true, boMonId: true, khoaId: true },
   });
 });
 

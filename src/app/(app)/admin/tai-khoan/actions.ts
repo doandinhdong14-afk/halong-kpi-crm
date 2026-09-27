@@ -80,7 +80,7 @@ export async function xoaTaiKhoan(id: string) {
 
     // Lấy danh sách file minh chứng để xóa khỏi ổ đĩa sau khi xóa bản ghi (cascade chỉ xóa DB).
     const files = await db.fileDinhKem.findMany({
-      where: { baiNop: { gvTask: { gvId: id } } },
+      where: { baiNop: { kpiTask: { userId: id } } },
       select: { duongDan: true },
     });
     const { count } = await db.user.deleteMany({ where: { id } });

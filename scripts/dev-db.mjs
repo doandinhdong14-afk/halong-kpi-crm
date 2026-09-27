@@ -4,7 +4,8 @@
 // Dữ liệu lưu ở .devdb/ (đã gitignore).
 //   node scripts/dev-db.mjs start   → khởi động (tự initdb + tạo DB lần đầu)
 //   node scripts/dev-db.mjs stop    → dừng
-// Kết nối: postgresql://postgres:postgres@localhost:5433/crm_kpi (E2E dùng crm_kpi_test)
+// Kết nối: postgresql://postgres:postgres@localhost:5433/crm_kpi_v14 (test dùng crm_kpi_v14_test).
+// DB crm_kpi / crm_kpi_test của bản v1.1 (nếu có) được giữ nguyên, không dùng nữa.
 import { existsSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
@@ -21,7 +22,7 @@ const exe = (name) => join(BIN, process.platform === "win32" ? `${name}.exe` : n
 
 const DATA_DIR = join(process.cwd(), ".devdb");
 const PORT = 5433;
-const DB_NAMES = ["crm_kpi", "crm_kpi_test"]; // _test dùng cho E2E
+const DB_NAMES = ["crm_kpi_v14", "crm_kpi_v14_test"]; // _test dùng cho test tích hợp + E2E
 
 const lenh = process.argv[2] ?? "start";
 

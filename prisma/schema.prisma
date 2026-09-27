@@ -1,8 +1,10 @@
-// Schema theo mục 11.1 của docs/spec-v1.1.md, có chỉnh chi tiết (xem NOTES.md):
+// Schema theo mục 12.1 của docs/spec.md (v1.4), có chỉnh chi tiết, giữ ý nghĩa (xem NOTES.md, B18):
+// - Prisma 7: generator "prisma-client", URL kết nối ở prisma.config.ts
 // - Ngày kỳ lưu dạng @db.Date (ngày thuần, tính giờ VN ở src/lib/time.ts)
-// - YeuCauThemTask có thêm kyId
-// - ThongBao có maSuKien để chống gửi trùng nhắc hạn
-// - onDelete: Restrict phía nhiệm vụ/task đã có người đăng ký/làm (lớp bảo vệ thứ hai)
+// - YeuCauThemTask có thêm kyId; ThongBao có maSuKien (chống gửi trùng nhắc việc)
+// - KpiTask.capNhatLuc: thời điểm đổi trạng thái gần nhất (sắp xếp Hàng chờ "cũ nhất lên trước")
+// - KetQuaKy.doiTuong: vị trí của người đó lúc chốt kỳ
+// - onDelete: Restrict phía nhiệm vụ/task đã có người đăng ký/làm (lớp bảo vệ thứ hai, mục 8.2)
 
 generator client {
   provider = "prisma-client"
@@ -22,6 +24,14 @@ enum Role {
   HT
 }
 
+/// Vị trí làm KPI (đối tượng của nhiệm vụ, bảng xếp loại).
+enum DoiTuong {
+  GV
+  TBM
+  TK
+  HP
+}
+
 enum LoaiTask {
   BAT_BUOC
   MO_RONG
@@ -38,7 +48,10 @@ enum TrangThaiTask {
   CHUA_LAM
   CHO_DUYET
   TU_CHOI
-  DA_DUYET
+  DA_DUYET // đã duyệt, chưa chốt (treo)
+  CHO_CHOT // đã gửi lên người chốt (treo) – không dùng cho task HP
+  DA_CHOT // được tính hoàn thành
+  TRA_VE // người chốt trả về người duyệt – không dùng cho task HP
 }
 
 enum TrangThaiDuyet {
@@ -53,10 +66,24 @@ enum KetQua {
   VUOT
 }
 
+enum HanhDongTask {
+  NOP
+  SUA_BAI_NOP
+  DUYET
+  TU_CHOI
+  HUY_DUYET
+  GUI_CHOT
+  CHOT
+  TRA_VE
+}
+
 model Khoa {
-  id     String  @id @default(cuid())
-  ten    String
-  boMons BoMon[]
+  id         String  @id @default(cuid())
+  ten        String
+  hieuPhoId  String?
+  hieuPho    User?   @relation("HieuPhoPhuTrach", fields: [hieuPhoId], references: [id], onDelete: SetNull)
+  boMons     BoMon[]
+  thanhViens User[]  @relation("ThanhVienKhoa")
 }
 
 model BoMon {
@@ -76,15 +103,20 @@ model User {
   isDefaultPassword Boolean  @default(true)
   boMonId           String?
   boMon             BoMon?   @relation(fields: [boMonId], references: [id])
+  khoaId            String?
+  khoa              Khoa?    @relation("ThanhVienKhoa", fields: [khoaId], references: [id])
   createdAt         DateTime @default(now())
 
-  dangKys     DangKy[]
-  gvTasks     GvTask[]
-  yeuCaus     YeuCauThemTask[]
-  ketQuas     KetQuaKy[]
-  vanBanDaGui VanBan[]
-  vanBanNhan  VanBanNguoiNhan[]
-  thongBaos   ThongBao[]
+  khoaPhuTrach Khoa[]           @relation("HieuPhoPhuTrach")
+  dangKys      DangKy[]
+  kpiTasks     KpiTask[]
+  yeuCaus      YeuCauThemTask[]
+  ketQuas      KetQuaKy[]
+  vanBanDaGui  VanBan[]
+  vanBanDaXem  VanBanDaXem[]
+  thongBaos    ThongBao[]
+
+  @@index([role])
 }
 
 model Ky {
@@ -101,7 +133,7 @@ model Ky {
   nhiemVus    NhiemVu[]
   bacXepLoais BacXepLoai[]
   dangKys     DangKy[]
-  gvTasks     GvTask[]
+  kpiTasks    KpiTask[]
   yeuCaus     YeuCauThemTask[]
   ketQuas     KetQuaKy[]
 
@@ -109,25 +141,29 @@ model Ky {
 }
 
 model BacXepLoai {
-  id           String @id @default(cuid())
+  id           String   @id @default(cuid())
   kyId         String
-  ky           Ky     @relation(fields: [kyId], references: [id], onDelete: Cascade)
+  ky           Ky       @relation(fields: [kyId], references: [id], onDelete: Cascade)
+  doiTuong     DoiTuong
   ten          String
   diemToiThieu Int
 
-  @@unique([kyId, ten])
+  @@unique([kyId, doiTuong, ten])
 }
 
 model NhiemVu {
-  id      String          @id @default(cuid())
-  kyId    String
-  ky      Ky              @relation(fields: [kyId], references: [id], onDelete: Cascade)
-  ten     String
-  moTa    String?
-  diem    Int
-  thuTu   Int             @default(0)
-  tasks   Task[]
-  dangKys DangKyNhiemVu[]
+  id       String          @id @default(cuid())
+  kyId     String
+  ky       Ky              @relation(fields: [kyId], references: [id], onDelete: Cascade)
+  doiTuong DoiTuong
+  ten      String
+  moTa     String?
+  diem     Int
+  thuTu    Int             @default(0)
+  tasks    Task[]
+  dangKys  DangKyNhiemVu[]
+
+  @@index([kyId, doiTuong])
 }
 
 model Task {
@@ -138,7 +174,7 @@ model Task {
   moTa      String?
   loai      LoaiTask         @default(BAT_BUOC)
   thuTu     Int              @default(0)
-  gvTasks   GvTask[]
+  kpiTasks  KpiTask[]
   yeuCaus   YeuCauThemTask[]
 }
 
@@ -146,8 +182,8 @@ model DangKy {
   id           String          @id @default(cuid())
   kyId         String
   ky           Ky              @relation(fields: [kyId], references: [id], onDelete: Cascade)
-  gvId         String
-  gv           User            @relation(fields: [gvId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   trangThai    TrangThaiDangKy @default(NHAP)
   tongDiem     Int             @default(0)
   xepLoai      String?
@@ -157,7 +193,8 @@ model DangKy {
   duyetLuc     DateTime?
   nhiemVus     DangKyNhiemVu[]
 
-  @@unique([kyId, gvId])
+  @@unique([kyId, userId])
+  @@index([kyId, trangThai])
 }
 
 model DangKyNhiemVu {
@@ -169,25 +206,33 @@ model DangKyNhiemVu {
   @@id([dangKyId, nhiemVuId])
 }
 
-model GvTask {
-  id        String        @id @default(cuid())
-  gvId      String
-  gv        User          @relation(fields: [gvId], references: [id], onDelete: Cascade)
-  kyId      String
-  ky        Ky            @relation(fields: [kyId], references: [id], onDelete: Cascade)
-  taskId    String
-  task      Task          @relation(fields: [taskId], references: [id], onDelete: Restrict)
-  trangThai TrangThaiTask @default(CHUA_LAM)
-  baiNops   BaiNop[]
+model KpiTask {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kyId        String
+  ky          Ky            @relation(fields: [kyId], references: [id], onDelete: Cascade)
+  taskId      String
+  task        Task          @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  trangThai   TrangThaiTask @default(CHUA_LAM)
+  nhanXetChot String?
+  nguoiChotId String?
+  guiChotLuc  DateTime?
+  chotLuc     DateTime?
+  /// Thời điểm đổi trạng thái gần nhất (đặt trong mọi lần chuyển trạng thái).
+  capNhatLuc  DateTime      @default(now())
+  baiNops     BaiNop[]
+  lichSus     LichSuTask[]
 
-  @@unique([gvId, taskId])
-  @@index([kyId, gvId])
+  @@unique([userId, taskId])
+  @@index([kyId, userId])
+  @@index([kyId, trangThai])
 }
 
 model BaiNop {
   id           String         @id @default(cuid())
-  gvTaskId     String
-  gvTask       GvTask         @relation(fields: [gvTaskId], references: [id], onDelete: Cascade)
+  kpiTaskId    String
+  kpiTask      KpiTask        @relation(fields: [kpiTaskId], references: [id], onDelete: Cascade)
   ghiChu       String?
   link         String?
   trangThai    TrangThaiDuyet @default(CHO_DUYET)
@@ -197,7 +242,19 @@ model BaiNop {
   duyetLuc     DateTime?
   files        FileDinhKem[]
 
-  @@index([trangThai])
+  @@index([kpiTaskId])
+}
+
+model LichSuTask {
+  id              String       @id @default(cuid())
+  kpiTaskId       String
+  kpiTask         KpiTask      @relation(fields: [kpiTaskId], references: [id], onDelete: Cascade)
+  hanhDong        HanhDongTask
+  nguoiThucHienId String?
+  nhanXet         String?
+  luc             DateTime     @default(now())
+
+  @@index([kpiTaskId])
 }
 
 model FileDinhKem {
@@ -215,8 +272,8 @@ model FileDinhKem {
 
 model YeuCauThemTask {
   id           String         @id @default(cuid())
-  gvId         String
-  gv           User           @relation(fields: [gvId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   kyId         String
   ky           Ky             @relation(fields: [kyId], references: [id], onDelete: Cascade)
   taskId       String
@@ -234,50 +291,54 @@ model KetQuaKy {
   id        String   @id @default(cuid())
   kyId      String
   ky        Ky       @relation(fields: [kyId], references: [id], onDelete: Cascade)
-  gvId      String
-  gv        User     @relation(fields: [gvId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Vị trí của người này lúc chốt kỳ.
+  doiTuong  DoiTuong
   phanTram  Float
   ketQua    KetQua
   xepLoai   String
-  taskThieu Json
-  taskVuot  Json
+  taskThieu Json // [{ ten, nhiemVu, trangThai, lyDo }]
+  taskVuot  Json // [{ ten, nhiemVu }]
+  soTreo    Int      @default(0)
   ghiChu    String?
   chotLuc   DateTime @default(now())
 
-  @@unique([kyId, gvId])
+  @@unique([kyId, userId])
 }
 
 model VanBan {
-  id         String            @id @default(cuid())
+  id         String        @id @default(cuid())
   tieuDe     String
   noiDung    String
+  viTriNhan  Role[] // GV, TBM, TK, HP, ADMIN
   nguoiGuiId String?
-  nguoiGui   User?             @relation(fields: [nguoiGuiId], references: [id], onDelete: SetNull)
-  guiLuc     DateTime          @default(now())
+  nguoiGui   User?         @relation(fields: [nguoiGuiId], references: [id], onDelete: SetNull)
+  guiLuc     DateTime      @default(now())
   files      FileDinhKem[]
-  nguoiNhans VanBanNguoiNhan[]
+  daXems     VanBanDaXem[]
 }
 
-model VanBanNguoiNhan {
+model VanBanDaXem {
   vanBanId String
-  vanBan   VanBan    @relation(fields: [vanBanId], references: [id], onDelete: Cascade)
+  vanBan   VanBan   @relation(fields: [vanBanId], references: [id], onDelete: Cascade)
   userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  daXemLuc DateTime?
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  daXemLuc DateTime @default(now())
 
   @@id([vanBanId, userId])
 }
 
 model ThongBao {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  noiDung   String
-  link      String?
-  daDoc     Boolean  @default(false)
-  // Khóa chống trùng cho thông báo tự động (vd nhắc hạn). NULL = không kiểm tra trùng.
-  maSuKien  String?
-  taoLuc    DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  noiDung  String
+  link     String?
+  daDoc    Boolean  @default(false)
+  // Khóa chống trùng cho thông báo tự động (vd nhắc việc). NULL = không kiểm tra trùng.
+  maSuKien String?
+  taoLuc   DateTime @default(now())
 
   @@unique([userId, maSuKien])
   @@index([userId, daDoc])
