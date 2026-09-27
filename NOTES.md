@@ -219,3 +219,30 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Nhắc hạn 3 ngày / 7 ngày làm ở bước 8 (endpoint cron đã gọi sẵn `guiNhacHan`).
+
+## Bước 7 – Giấy tờ (HT ban hành, Nhận giấy tờ, Admin nhận chỉ thị) ✅
+
+**Đã làm**
+- HT `/ht/ban-hanh`:
+  - tiêu đề, nội dung, file đính kèm (cùng luật với minh chứng, không bắt buộc)
+  - bảng người nhận có ô tick, lọc theo chức vụ, "Chọn tất cả" (theo danh sách đang lọc)
+  - gửi qua `POST /api/van-ban` (logic ở `src/lib/services/van-ban.ts`)
+- HT `/ht/da-ban-hanh`: mỗi giấy tờ hiện "x/y đã xem". `/ht/da-ban-hanh/[id]`: nội dung, file, bảng ai đã xem (kèm giờ) / ai chưa.
+- Nhận:
+  - `/giay-to` + `/giay-to/[id]` cho GV, TBM, TK, HP; `/admin/chi-thi` + `/[id]` cho Admin
+  - dùng chung `src/components/giay-to/*`; nhãn **Mới** khi chưa xem
+  - chỉ người nhận mới mở được (khác → 404)
+- Ghi nhận đã xem: action `danhDauDaXem` gọi từ client khi trang mở (không ghi lúc render, tránh prefetch ghi nhầm); chỉ ghi lần đầu.
+- Thông báo "Có giấy tờ mới" cho người được tick; link theo vai trò (admin → Nhận chỉ thị).
+- Quyền file giấy tờ qua `/api/files/[id]`: người gửi, người nhận, Admin.
+- Test: tích hợp `van-ban.int.test.ts` 3 (chỉ HT; kiểm tra dữ liệu; case phụ 2 GV + admin → 3 người nhận, GV mở → 1/3, quyền file); E2E `buoc-7-giay-to.spec.ts` 5/5.
+
+**Tự chọn**
+- Người nhận: mọi tài khoản trừ HT (#10). Tiêu đề ≤300 ký tự, nội dung ≤20.000 ký tự, tối đa 10 file.
+- HT chỉ thấy giấy tờ do chính mình gửi.
+
+**Lỗi đã sửa trong bước**
+- Form ban hành làm mất file (đọc `FileList` trong updater chạy trễ, sau khi input đã bị xóa). E2E phát hiện; đã sửa.
+
+**Còn tồn**
+- Không có.
