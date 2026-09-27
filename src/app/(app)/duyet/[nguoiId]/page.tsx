@@ -13,6 +13,8 @@ import { layNguoiDuocDuyet } from "@/lib/services/duyet";
 import { dsChonKy, layKyTheoUrl } from "@/lib/services/ky";
 import { cn } from "@/lib/utils";
 import { TabDangKy } from "./tab-dang-ky";
+import { TabTask } from "./tab-task";
+import { TabXinThem } from "./tab-xin-them";
 
 const TABS = [
   { id: "dang-ky", nhan: "Đăng ký nhiệm vụ" },
@@ -69,7 +71,15 @@ export default async function TrangDuyetMotNguoi(props: PageProps<"/duyet/[nguoi
             ))}
           </nav>
           {tab === "dang-ky" && <TabDangKy ky={ky} userId={nguoi.id} />}
-          {tab !== "dang-ky" && <p className="text-muted-foreground">Sẽ hoàn thiện ở bước 6.</p>}
+          {tab === "task" && (
+            <TabTask
+              ky={ky}
+              nguoi={nguoi}
+              loc={typeof sp.loc === "string" ? sp.loc : undefined}
+              taskId={typeof sp.task === "string" ? sp.task : undefined}
+            />
+          )}
+          {tab === "xin-them" && <TabXinThem ky={ky} userId={nguoi.id} />}
         </>
       )}
     </div>

@@ -30,6 +30,8 @@ export const LINK = {
   taskCuaToi: (kpiTaskId: string) => `/cuoi-ky/task/${kpiTaskId}`,
   duyetNguoi: (userId: string, kyId: string, tab: "dang-ky" | "task" | "xin-them") =>
     `/duyet/${userId}?kyId=${kyId}&tab=${tab}`,
+  duyetTask: (userId: string, kyId: string, kpiTaskId: string) =>
+    `/duyet/${userId}?kyId=${kyId}&tab=task&task=${kpiTaskId}`,
   duyetTongQuan: (kyId: string) => `/duyet?kyId=${kyId}`,
   chot: (kyId: string) => `/chot?kyId=${kyId}`,
 };

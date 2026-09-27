@@ -149,3 +149,28 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Tab Hàng chờ, tab Task và minh chứng, tab Xin thêm task: bước 6.
+
+## Bước 6 – Luồng KPI chung: Cuối kỳ + màn hình Duyệt đầy đủ ✅
+
+**Đã làm**
+- `src/lib/kpi/trang-thai.ts`: **máy trạng thái task duy nhất** (bảng 5.3). `luatChuyen(hanhDong, gop)` cho 10 hành động (Nộp, Sửa bài nộp, Duyệt, Từ chối, Hủy duyệt, Gửi lên, Chốt, Trả về, Trả làm lại, Duyệt lại); task HP chỉ khác cờ `gop` (Chốt từ Đã duyệt, không có Gửi lên/Trả về). `hanhDongDuocPhep` cho giao diện, `lyDoKhongChuyen` cho server. Nhãn "người làm KPI thấy" theo chức danh (vd "Trưởng bộ môn đã duyệt – chờ trưởng khoa chốt"; HP: "Hiệu trưởng đã duyệt – chờ chốt").
+- `src/lib/ket-qua.ts`: **một hàm** `tinhKetQuaThuan` (mục 10.3) + `src/lib/services/ket-qua.ts` (`tinhKetQua(kyId, userId)`, `taiKetQua` theo lô). Chỉ `DA_CHOT` được tính; thống kê 5 phần biểu đồ; lý do task thiếu (5.4).
+- `src/lib/services/kpi-task.ts` `thucHienTask`: tư cách (người duyệt / người chốt) tính theo cơ cấu hiện tại; kiểm tra thời gian, luật chuyển, nhận xét bắt buộc; A3 khi Gửi lên thiếu người chốt; cập nhật có điều kiện; cập nhật bài nộp gần nhất (duyệt/từ chối/hủy duyệt); ghi `LichSuTask`; thông báo mục 11.
+- `src/lib/services/bai-nop.ts` (nộp / sửa lần nộp hiện tại), `yeu-cau.ts` (xin thêm, duyệt/từ chối yêu cầu), `quyen-file.ts` (quyền xem file 12.2), `lich-su.ts`.
+- API: `POST /api/kpi-task/[id]/bai-nop`, `PATCH /api/bai-nop/[id]`, `GET /api/files/[id]` (PDF/ảnh inline).
+- `/cuoi-ky?kyId=` (chung 4 vị trí): biểu đồ tròn 5 phần (Đã chốt / Đang treo / Chờ duyệt / Bị từ chối gồm bị trả về / Chưa làm), % ở giữa, "Đang treo: N task", xếp loại đăng ký, "+N task vượt", đếm ngược deadline; danh sách nhiệm vụ → task; Xin thêm task; banner khi thiếu người duyệt (vẫn nộp được, A3). `/cuoi-ky/task/[kpiTaskId]`: nộp / sửa / nộp lại, lịch sử các lần nộp.
+- Màn hình Duyệt: cột **% hoàn thành**; tab **Hàng chờ** (Chờ duyệt, Bị trả về, Đã duyệt; cũ nhất lên trước theo `capNhatLuc`); trang chi tiết người: tab **Task và minh chứng** (lọc theo trạng thái, mở task: minh chứng PDF/ảnh xem ngay, Word/Excel tải về, ghi chú, link, lịch sử nộp, nhật ký xử lý; nút theo máy trạng thái), tab **Xin thêm task**.
+- Component dùng chung cho Duyệt và Chốt: `src/components/kpi/chi-tiet-task-quan-ly.tsx`, `nut-thao-tac-task.tsx` + server action chung `src/components/kpi/actions.ts` (`thaoTacTask`), nhãn nút ở `src/lib/kpi/nut-task.ts`.
+- Test: unit `trang-thai` 9, `ket-qua` 8; tích hợp `tests/kpi-task.int.test.ts` 12 (nộp/sửa/khóa, sai định dạng, người khác/Admin không sửa được, duyệt–hủy duyệt–gửi lên, hủy duyệt sau khi gửi bị chặn, từ chối + nộp lại, người không phải người duyệt bị chặn, TBM và TK tới Chờ chốt, HT duyệt rồi chốt task HP, xin thêm, quyền file, hết deadline/kỳ chốt); E2E `e2e/buoc-06-cuoi-ky.spec.ts` 7/7.
+
+**Tự chọn**
+- Hủy duyệt: bài nộp gần nhất về Chờ duyệt và xóa nhận xét/người duyệt của lần duyệt đó (lịch sử vẫn trong `LichSuTask`).
+- Không gửi thông báo khi Hủy duyệt và Duyệt lại (đặc tả không liệt kê).
+- Trang chi tiết người trên màn hình Duyệt dùng tham số `?task=` để mở một task; Hàng chờ và thông báo dẫn thẳng tới task đó.
+- Nhật ký xử lý (có nhận xét của người chốt) chỉ hiện cho cấp quản lý; người làm KPI chỉ thấy lịch sử các lần nộp và nhận xét của người duyệt.
+
+**Còn tồn**
+- Màn hình Chốt và xử lý task bị trả về trên giao diện: bước 7 (service đã có).
+
+**Ghi chú git**
+- Trong bước 5, nhánh `v1.4` đã được đổi tên thành `main` và gắn remote `origin` (GitHub), kèm 2 commit tự động "Initial commit", "Add teacher scoring page" chứa file của bước 5 (đã push nên không sửa lại lịch sử). Tôi không push; các bước tiếp tục commit trên `main`.

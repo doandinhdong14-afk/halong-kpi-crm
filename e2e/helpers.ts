@@ -41,3 +41,52 @@ export async function dangNhap(page: Page, username: string, matKhau = "123456")
 export async function menu(page: Page): Promise<string[]> {
   return page.locator("aside nav a").allInnerTexts();
 }
+
+/** Người làm KPI tick nhiệm vụ và gửi (qua giao diện Đầu kỳ). */
+export async function dangKyUi(page: Page, username: string, nhiemVus: string[], nutGui: string) {
+  await dangNhap(page, username);
+  await page.goto("/dau-ky");
+  for (const nv of nhiemVus) await page.getByLabel(`Chọn ${nv}`).check();
+  await expect(page.getByTestId("so-nhiem-vu")).toHaveText(String(nhiemVus.length));
+  await page.getByRole("button", { name: nutGui }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Gửi" }).click();
+  await expect(page.getByTestId("banner-trang-thai")).toContainText("Chờ duyệt");
+}
+
+/** Người duyệt duyệt danh sách đăng ký của nguoiLam (qua màn hình Duyệt). */
+export async function duyetDangKyUi(page: Page, nguoiDuyet: string, nguoiLam: string) {
+  await dangNhap(page, nguoiDuyet);
+  await page.goto("/duyet");
+  await page.locator(`tr[data-nguoi="${nguoiLam}"]`).getByRole("link", { name: "Xem" }).click();
+  await page.getByRole("button", { name: "Duyệt", exact: true }).click();
+  await page.getByRole("button", { name: "Xác nhận duyệt" }).click();
+  await expect(page.getByText("Đã duyệt danh sách. Các task bắt buộc đã được giao.")).toBeVisible();
+}
+
+/** Người làm KPI nộp minh chứng cho một task (qua trang Cuối kỳ). */
+export async function nopUi(page: Page, username: string, task: string, tenFile = "minh-chung.pdf") {
+  await dangNhap(page, username);
+  await page.goto("/cuoi-ky");
+  await page.locator(`[data-task="${task}"]`).getByRole("link").click();
+  await page.getByLabel("File minh chứng").setInputFiles({
+    name: tenFile,
+    mimeType: tenFile.endsWith(".png") ? "image/png" : "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 minh chung"),
+  });
+  await page.getByRole("button", { name: "Gửi minh chứng" }).click();
+  await expect(page.getByText(/Đã nộp minh chứng, chờ .* duyệt\./)).toBeVisible();
+}
+
+/** Mở task trên màn hình Duyệt (trang chi tiết người → tab Task) và bấm một thao tác. */
+export async function thaoTacDuyetUi(page: Page, nguoiDuyet: string, nguoiLam: string, task: string, nut: string, nhanXet?: string) {
+  await dangNhap(page, nguoiDuyet);
+  await page.goto("/duyet");
+  await page.locator(`tr[data-nguoi="${nguoiLam}"]`).getByRole("link", { name: "Xem" }).click();
+  await page.getByRole("link", { name: "Task và minh chứng" }).click();
+  await page.locator(`tr[data-task="${task}"]`).getByRole("link", { name: "Mở" }).click();
+  await expect(page.getByTestId("chi-tiet-task")).toHaveAttribute("data-task", task);
+  await page.getByTestId("nut-thao-tac").getByRole("button", { name: nut }).click();
+  if (nhanXet !== undefined) await page.getByRole("dialog").getByRole("textbox").fill(nhanXet);
+  await page.getByRole("dialog").getByRole("button", { name: "Xác nhận" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}

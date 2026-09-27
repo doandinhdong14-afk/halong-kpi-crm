@@ -10,9 +10,12 @@ import { CHUOI, nhanDaDuyetChuaXong, viTriDuocDuyet } from "@/lib/kpi/chuoi";
 import { tenMuc } from "@/lib/menu";
 import { NHAN_DANG_KY } from "@/lib/nhan";
 import { TEN_VAI_TRO } from "@/lib/roles";
+import { hienPhanTram } from "@/lib/ket-qua";
 import { tongQuanDuyet } from "@/lib/services/duyet";
+import { taiKetQua } from "@/lib/services/ket-qua";
 import { dsChonKy, layKyTheoUrl } from "@/lib/services/ky";
 import { cn } from "@/lib/utils";
+import { HangCho } from "./hang-cho";
 
 const TABS = [
   { id: "tong-quan", nhan: "Tổng quan" },
@@ -38,6 +41,7 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
   }
 
   const dong = await tongQuanDuyet(m, ky.id);
+  const ketQua = await taiKetQua(ky.id, dong.map((d) => d.nguoi));
   const tong = (f: (d: (typeof dong)[number]) => number) => dong.reduce((s, d) => s + f(d), 0);
   const oDem = [
     { nhan: "Danh sách đăng ký chờ duyệt", so: dong.filter((d) => d.dangKy?.trangThai === "CHO_DUYET").length, id: "dang-ky" },
@@ -94,6 +98,7 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
                 <TableRow>
                   <TableHead>Họ tên</TableHead>
                   <TableHead>Đăng ký</TableHead>
+                  <TableHead className="text-right">% hoàn thành</TableHead>
                   <TableHead className="text-right">Chờ duyệt</TableHead>
                   <TableHead className="text-right">{gop ? "Chưa chốt" : "Chưa gửi lên"}</TableHead>
                   {!gop && <TableHead className="text-right">Chờ chốt</TableHead>}
@@ -105,7 +110,7 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
               <TableBody>
                 {dong.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                       Chưa có ai trong phạm vi duyệt của bạn.
                     </TableCell>
                   </TableRow>
@@ -130,6 +135,9 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
                         <span className="text-sm text-muted-foreground">Chưa đăng ký</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right tabular-nums" data-cot="phan-tram">
+                      {hienPhanTram(ketQua.get(d.nguoi.id)?.phanTram ?? 0)}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{d.demTask.CHO_DUYET ?? 0}</TableCell>
                     <TableCell className="text-right tabular-nums">{d.demTask.DA_DUYET ?? 0}</TableCell>
                     {!gop && <TableCell className="text-right tabular-nums">{d.demTask.CHO_CHOT ?? 0}</TableCell>}
@@ -147,7 +155,7 @@ export default async function TrangDuyet(props: PageProps<"/duyet">) {
           </div>
         </>
       ) : (
-        <p className="text-muted-foreground">Hàng chờ task sẽ hoàn thiện ở bước 6.</p>
+        <HangCho m={m} ky={ky} />
       )}
     </div>
   );

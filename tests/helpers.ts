@@ -1,5 +1,14 @@
 import { execSync } from "node:child_process";
 import { db } from "@/lib/db";
+import { chonNhiemVu, guiDangKy } from "@/app/(app)/dau-ky/actions";
+import { duyetDangKy } from "@/app/(app)/duyet/actions";
+import { thaoTacTask } from "@/components/kpi/actions";
+import { POST as apiNop } from "@/app/api/kpi-task/[id]/bai-nop/route";
+import { PATCH as apiSua } from "@/app/api/bai-nop/[id]/route";
+import { GET as apiFile } from "@/app/api/files/[id]/route";
+import type { DoiTuong } from "@/generated/prisma/enums";
+import { nguoiChot, nguoiDuyet } from "@/lib/co-cau";
+import { taiCoCau } from "@/lib/services/co-cau";
 
 export const phien: { userId: string | null } = { userId: null };
 
@@ -26,4 +35,104 @@ export async function dangNhapNhu(username: string) {
 
 export async function user(username: string) {
   return db.user.findUniqueOrThrow({ where: { username } });
+}
+
+// ───────────── Tiện ích cho luồng KPI ─────────────
+
+export async function kyDau() {
+  return db.ky.findFirstOrThrow({ orderBy: { createdAt: "asc" } });
+}
+
+/** Người duyệt / người chốt hiện tại của một người làm KPI. */
+export async function nguoiDuyetCua(username: string) {
+  const cc = await taiCoCau();
+  return nguoiDuyet(cc.users.find((x) => x.username === username)!, cc)!.username;
+}
+export async function nguoiChotCua(username: string) {
+  const cc = await taiCoCau();
+  return nguoiChot(cc.users.find((x) => x.username === username)!, cc)!.username;
+}
+
+/** Người làm KPI tick n nhiệm vụ đầu của vị trí mình, gửi; người duyệt duyệt. */
+export async function dangKyVaDuyet(username: string, n: number) {
+  const ky = await kyDau();
+  const u = await dangNhapNhu(username);
+  const nvs = await db.nhiemVu.findMany({ where: { kyId: ky.id, doiTuong: u.role as DoiTuong }, orderBy: { thuTu: "asc" } });
+  for (const nv of nvs.slice(0, n)) {
+    const r = await chonNhiemVu({ kyId: ky.id, nhiemVuId: nv.id, chon: true });
+    if (!r.ok) throw new Error(r.error);
+  }
+  const g = await guiDangKy(ky.id);
+  if (!g.ok) throw new Error(g.error);
+  const dk = await db.dangKy.findUniqueOrThrow({ where: { kyId_userId: { kyId: ky.id, userId: u.id } } });
+  await dangNhapNhu(await nguoiDuyetCua(username));
+  const d = await duyetDangKy({ dangKyId: dk.id });
+  if (!d.ok) throw new Error(d.error);
+  return u;
+}
+
+export function fileMau(ten = "minh-chung.pdf", noiDung = "%PDF-1.4 minh chung") {
+  return new File([noiDung], ten, { type: "application/pdf" });
+}
+
+function ctx(id: string) {
+  return { params: Promise.resolve({ id }) } as never;
+}
+
+/** Gọi API nộp minh chứng như trình duyệt (phiên hiện tại). */
+export async function nop(kpiTaskId: string, files: File[] = [fileMau()], ghiChu = "") {
+  const fd = new FormData();
+  files.forEach((f) => fd.append("files", f));
+  fd.append("ghiChu", ghiChu);
+  return apiNop(new Request("http://localhost/api", { method: "POST", body: fd }), ctx(kpiTaskId));
+}
+
+export async function suaBai(baiNopId: string, ghiChu: string, files: File[] = []) {
+  const fd = new FormData();
+  files.forEach((f) => fd.append("files", f));
+  fd.append("ghiChu", ghiChu);
+  return apiSua(new Request("http://localhost/api", { method: "PATCH", body: fd }), ctx(baiNopId));
+}
+
+export async function moFile(fileId: string) {
+  return apiFile(new Request(`http://localhost/api/files/${fileId}`), ctx(fileId));
+}
+
+/** Thao tác của người duyệt/người chốt với phiên hiện tại. */
+export async function thaoTac(kpiTaskId: string, hanhDong: string, nhanXet?: string) {
+  return thaoTacTask({ kpiTaskId, hanhDong, nhanXet });
+}
+
+export async function taskCua(username: string) {
+  const u = await user(username);
+  return db.kpiTask.findMany({
+    where: { userId: u.id },
+    include: { task: { select: { ten: true, loai: true, thuTu: true, nhiemVu: { select: { thuTu: true } } } } },
+    orderBy: [{ task: { nhiemVu: { thuTu: "asc" } } }, { task: { thuTu: "asc" } }],
+  });
+}
+
+/** Người làm KPI nộp; người duyệt duyệt; (tuỳ chọn) gửi lên; (tuỳ chọn) người chốt chốt. */
+export async function lamTask(username: string, kpiTaskId: string, den: "DA_DUYET" | "CHO_CHOT" | "DA_CHOT") {
+  await dangNhapNhu(username);
+  const r = await nop(kpiTaskId);
+  if (r.status !== 201) throw new Error(await r.text());
+  const duyet = await nguoiDuyetCua(username);
+  const chot = await nguoiChotCua(username);
+  await dangNhapNhu(duyet);
+  const d = await thaoTac(kpiTaskId, "DUYET");
+  if (!d.ok) throw new Error(d.error);
+  if (den === "DA_DUYET") return;
+  if (duyet === chot) {
+    // Task HP: HT chốt ngay.
+    const c = await thaoTac(kpiTaskId, "CHOT");
+    if (!c.ok) throw new Error(c.error);
+    return;
+  }
+  const g = await thaoTac(kpiTaskId, "GUI_CHOT");
+  if (!g.ok) throw new Error(g.error);
+  if (den === "CHO_CHOT") return;
+  await dangNhapNhu(chot);
+  const c = await thaoTac(kpiTaskId, "CHOT");
+  if (!c.ok) throw new Error(c.error);
 }
