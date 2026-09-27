@@ -59,6 +59,7 @@ Nếu thấy luồng chỉ chạy được khi làm một mục trong danh sách
 - `npm run db:reset`: xóa sạch DB dev rồi seed lại. Prisma chặn AI tự chạy lệnh này; chỉ người dùng chạy.
 - `npm test`: unit test (Vitest, `src/**/*.test.ts`)
 - `npm run e2e`: E2E (Playwright + Chrome cài sẵn) trên DB `crm_kpi_test`, server cổng 3100. Cần `npm run build` trước.
+- `npm run release`: migrate deploy + seed (bước pre-deploy trên Railway). Cấu hình deploy: `railway.json` (app), `railway.cron.json` (cron); hướng dẫn trong `NOTES.md` bước 9.
 
 ## Next.js 16
 @AGENTS.md

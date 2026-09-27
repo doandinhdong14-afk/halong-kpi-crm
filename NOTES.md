@@ -275,3 +275,70 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 9 – Chuẩn bị deploy Railway ✅ (chưa deploy; bạn tự đăng nhập Railway)
+
+**Đã làm**
+- `railway.json` (service app):
+  - build `npm run build` (prisma generate + next build)
+  - pre-deploy `npm run release` = `prisma migrate deploy && prisma db seed` (seed tự bỏ qua khi DB đã có dữ liệu, chạy mỗi lần deploy vẫn an toàn)
+  - start `npm run start` (Next đọc `PORT` do Railway cấp)
+  - healthcheck `/dang-nhap`
+- `railway.cron.json` (service cron, cùng repo): lịch `5 17 * * *` (UTC = 00:05 giờ VN), chạy `npm run cron:chot-ky` → `scripts/cron-chot-ky.mjs` gọi `POST {APP_URL}/api/cron/chot-ky` kèm `Authorization: Bearer <CRON_SECRET>`, lỗi thì thoát mã 1.
+- `prisma`, `tsx`, `dotenv` chuyển sang `dependencies` (bước pre-deploy cần). `engines.node` = `>=20.9 <25`.
+- `prisma.config.ts` không bắt buộc `DATABASE_URL` khi `prisma generate` (service cron build không có DB).
+- Đã mô phỏng ở máy: build → release (migrate + seed bỏ qua) → start với `PORT` → `/dang-nhap` trả 200, `/` chưa đăng nhập trả 307 → `/dang-nhap` → script cron trả 200 `{"ok":true,…}`; sai secret → 401, thoát mã 1.
+
+### Hướng dẫn deploy lên Railway
+
+**0. Đưa code lên GitHub** (repo đã có git ở máy, chưa có remote):
+```bash
+git remote add origin https://github.com/<tai-khoan>/<repo>.git
+git push -u origin master
+```
+
+**1. Tạo project + service app**
+- Railway → New Project → Deploy from GitHub repo → chọn repo. Đặt tên service là **`app`**.
+- Railway tự đọc `railway.json` ở gốc repo (build, pre-deploy, start, healthcheck).
+
+**2. Thêm PostgreSQL**: trong project → New → Database → **PostgreSQL** (tên mặc định `Postgres`).
+
+**3. Thêm Volume cho app**: chuột phải service `app` → Attach Volume → mount path **`/data`**.
+Không tăng số replica của app lên >1 (Volume chỉ gắn được 1 instance).
+
+**4. Biến môi trường của service `app`** (tab Variables):
+| Biến | Giá trị |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `AUTH_SECRET` | chuỗi ngẫu nhiên ≥32 ký tự (vd chạy `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`) |
+| `CRON_SECRET` | chuỗi ngẫu nhiên khác |
+| `UPLOAD_DIR` | `/data/uploads` |
+| `TZ` | `Asia/Ho_Chi_Minh` |
+
+**5. Tạo domain**: service `app` → Settings → Networking → Generate Domain. Deploy lại nếu cần.
+Lần deploy đầu, bước pre-deploy sẽ tạo bảng và seed dữ liệu demo (8 tài khoản, mật khẩu `123456`, Kỳ 1 bắt đầu **đúng ngày deploy**).
+
+**6. Service cron**
+- Trong project → New → GitHub repo → cùng repo. Đặt tên **`cron`**.
+- Settings → Config-as-code → Railway config file path: **`/railway.cron.json`**. Kiểm tra Settings → Cron Schedule hiện `5 17 * * *`.
+- Variables của `cron`:
+  | Biến | Giá trị |
+  |---|---|
+  | `APP_URL` | `https://${{app.RAILWAY_PUBLIC_DOMAIN}}` |
+  | `CRON_SECRET` | `${{app.CRON_SECRET}}` |
+- Cron của Railway chạy theo **UTC**: `5 17 * * *` = 00:05 giờ Việt Nam.
+
+**7. Kiểm tra sau deploy**
+- Mở domain → đăng nhập `admin.quantri` / `123456` → Phân việc đầu kỳ thấy "Kỳ 1 – 2026-2027" Đã công bố.
+- Chạy cron thử: service `cron` → Deployments → Run now (hoặc từ máy):
+  `curl -X POST -H "Authorization: Bearer <CRON_SECRET>" https://<domain>/api/cron/chot-ky`
+  → log/response `{"ok":true,"daChot":[],"nhacHan":{…}}`.
+- Nộp thử một file minh chứng, redeploy app, file vẫn mở được → Volume hoạt động.
+
+**Lưu ý vận hành**
+- Hạn đăng ký của kỳ seed là 23:59 ngày deploy (#19). Trước buổi demo: admin sửa ngày bắt đầu, hoặc làm lại DB từ máy bằng `DATABASE_URL="<DATABASE_PUBLIC_URL của Postgres>" npm run db:reset` (xóa sạch dữ liệu, chỉ bạn chạy).
+- File nằm trên Volume, không nằm trong backup của Postgres → sao lưu Volume riêng nếu cần.
+- Next.js nhận upload qua route handler (không qua proxy nên không bị cắt 10MB). Railway không đặt giới hạn body riêng (tối đa 10 file × 20MB/lần nộp).
+
+**Chưa kiểm chứng được ở máy**
+- Chưa chạy thật trên Railway (không có tài khoản). Nếu dashboard báo `preDeployCommand`/`cronSchedule` sai định dạng, chỉnh trực tiếp trong Settings: Pre-deploy `npm run release`; cron `5 17 * * *`, start `npm run cron:chot-ky`.

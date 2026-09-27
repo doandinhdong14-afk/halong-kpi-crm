@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -8,6 +8,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // Không dùng env() (bắt buộc) để `prisma generate` lúc build chạy được khi chưa có DATABASE_URL
+    // (vd service cron trên Railway). Lệnh migrate vẫn cần DATABASE_URL.
+    url: process.env.DATABASE_URL ?? "",
   },
 });
