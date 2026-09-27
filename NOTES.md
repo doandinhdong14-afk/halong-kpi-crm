@@ -90,3 +90,30 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Không có.
+
+## Bước 3 – Admin: Phân việc đầu kỳ ✅
+
+**Đã làm**
+- `/admin/phan-viec`: danh sách kỳ (ngày, số nhiệm vụ, trạng thái). Dialog Tạo kỳ gồm: tên, năm học, kỳ số 1–4, ngày bắt đầu/kết thúc, ô **Sao chép từ kỳ trước** (mặc định là kỳ gần nhất; có thể chọn "Không sao chép").
+- `/admin/phan-viec/[kyId]`:
+  - sửa ngày bắt đầu/kết thúc; hiện hạn đăng ký và deadline
+  - nút **Công bố** (có xác nhận)
+  - tab Nhiệm vụ & task: thêm/sửa/xóa, cảnh báo nhiệm vụ chưa có task bắt buộc
+  - tab Bảng xếp loại: sửa cả bảng, lưu một lần
+- Service `src/lib/services/phan-viec.ts`: sao chép kỳ và các hàm kiểm tra luật khóa.
+- Server chặn:
+  - chỉ ADMIN
+  - kỳ đã chốt → khóa mọi thay đổi
+  - không trùng (năm học, kỳ số); năm học dạng `2026-2027`; ngày kết thúc ≥ ngày bắt đầu
+  - Công bố cần ≥1 nhiệm vụ và ≥1 bậc; kỳ đã công bố không xóa hết bậc
+  - tên/ngưỡng bậc không trùng
+  - A5: nhiệm vụ đã có đăng ký → không xóa, không sửa điểm; task đã có người làm/xin → không xóa, không đổi loại; không thêm task bắt buộc (hoặc đổi sang bắt buộc) trong nhiệm vụ đã có đăng ký Đã duyệt
+- Test: tích hợp `tests/phan-viec.int.test.ts` 7/7; E2E `e2e/buoc-3-phan-viec.spec.ts` 5/5.
+
+**Tự chọn**
+- "Đã có GV đăng ký" tính mọi trạng thái đăng ký, kể cả Nháp (theo nghĩa đen của đặc tả, an toàn nhất).
+- Chỉ sửa được ngày của kỳ; tên/năm học/kỳ số cố định sau khi tạo (đặc tả chỉ yêu cầu sửa ngày).
+- Nút "Chốt kỳ ngay" làm ở bước 6.
+
+**Còn tồn**
+- Không có.

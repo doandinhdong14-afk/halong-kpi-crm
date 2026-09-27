@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { kiemTraVaiTro } from "@/lib/auth/dal";
 import { hashMatKhau, MAT_KHAU_MAC_DINH } from "@/lib/auth/password";
 import { hanhDong, LoiNghiepVu } from "@/lib/loi";
+import { docDuLieu } from "@/lib/validate";
 import { ROLES } from "@/lib/roles";
 import { sinhTenDangNhap } from "@/lib/services/tai-khoan";
 import { xoaNhieuFile } from "@/lib/storage";
@@ -12,18 +13,12 @@ import { xoaNhieuFile } from "@/lib/storage";
 const HoTen = z.string().trim().min(1, "Vui lòng nhập họ tên.").max(100, "Họ tên quá dài.");
 const VaiTro = z.enum(ROLES, { message: "Chức vụ không hợp lệ." });
 
-function doc<T>(schema: z.ZodType<T>, v: unknown): T {
-  const r = schema.safeParse(v);
-  if (!r.success) throw new LoiNghiepVu(r.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
-  return r.data;
-}
-
 /** Xem trước tên đăng nhập sẽ được sinh (dialog Thêm/Sửa). */
 export async function xemTruocTenDangNhap(input: { hoTen: string; role: string; userId?: string }) {
   return hanhDong(async () => {
     await kiemTraVaiTro("ADMIN");
-    const hoTen = doc(HoTen, input.hoTen);
-    const role = doc(VaiTro, input.role);
+    const hoTen = docDuLieu(HoTen, input.hoTen);
+    const role = docDuLieu(VaiTro, input.role);
     return sinhTenDangNhap(db, hoTen, role, input.userId);
   }, false);
 }
@@ -31,8 +26,8 @@ export async function xemTruocTenDangNhap(input: { hoTen: string; role: string; 
 export async function taoTaiKhoan(input: { hoTen: string; role: string }) {
   return hanhDong(async () => {
     await kiemTraVaiTro("ADMIN");
-    const hoTen = doc(HoTen, input.hoTen);
-    const role = doc(VaiTro, input.role);
+    const hoTen = docDuLieu(HoTen, input.hoTen);
+    const role = docDuLieu(VaiTro, input.role);
     const passwordHash = await hashMatKhau(MAT_KHAU_MAC_DINH);
     // Demo 1 bộ môn: mọi tài khoản mới gán vào bộ môn đầu tiên (mục 2.4).
     const boMon = await db.boMon.findFirst({ orderBy: { ten: "asc" }, select: { id: true } });
@@ -50,8 +45,8 @@ export async function taoTaiKhoan(input: { hoTen: string; role: string }) {
 export async function suaTaiKhoan(input: { id: string; hoTen: string; role: string }) {
   return hanhDong(async () => {
     const admin = await kiemTraVaiTro("ADMIN");
-    const hoTen = doc(HoTen, input.hoTen);
-    const role = doc(VaiTro, input.role);
+    const hoTen = docDuLieu(HoTen, input.hoTen);
+    const role = docDuLieu(VaiTro, input.role);
 
     return db.$transaction(async (tx) => {
       const cu = await tx.user.findUnique({ where: { id: input.id } });
