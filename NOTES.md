@@ -191,3 +191,31 @@ Ghi lại các quyết định cho chỗ đặc tả chưa rõ, những gì đã
 
 **Còn tồn**
 - Khối "Kết quả" sau khi chốt kỳ làm ở bước 6.
+
+## Bước 6 – Chốt kỳ + kết quả ✅
+
+**Đã làm**
+- `src/lib/ket-qua.ts`: hàm thuần `tinhKetQuaGv` theo mục 9.3.
+- `src/lib/services/chot-ky.ts`:
+  - `chotKy(kyId)`: một transaction (timeout 120s); đặt `daChot` có điều kiện nên chạy hai lần không nhân đôi
+  - tính cho mọi tài khoản đang là GV, upsert `KetQuaKy` (taskThieu/taskVuot lưu dạng JSON `{ten, nhiemVu}`)
+  - thông báo cho GV và TBM
+  - `chotCacKyQuaHan()`: chốt các kỳ đã công bố và quá deadline
+- `POST /api/cron/chot-ky`:
+  - header `Authorization: Bearer <CRON_SECRET>`, so sánh timing-safe; sai → 401
+  - chốt kỳ quá hạn + gửi nhắc hạn (nhắc hạn hoàn thiện ở bước 8)
+- Admin: nút **Chốt kỳ ngay** (có xác nhận) trên trang chi tiết kỳ; action `chotKyNgay`.
+- GV `/gv/cuoi-ky`: khối Kết quả hiện cả kết quả thực hiện và xếp loại đăng ký, % hoàn thành, task còn thiếu (Không đạt) hoặc task đã làm vượt (Vượt chỉ tiêu). GV không có danh sách được duyệt → "Không đạt – F" + ghi chú. Sau chốt ẩn khu Xin thêm task.
+- TBM `/tbm/ket-qua?kyId=` (mặc định kỳ đã chốt gần nhất): bảng kết quả từng GV (kết quả, xếp loại, %, task thiếu/vượt). Component `BangKetQua` dùng lại cho admin ở bước 8.
+- Sửa nhỏ: các nút Công bố/Chốt tách khỏi form sửa ngày (tránh submit nhầm).
+- Test:
+  - unit `ket-qua` 6 (3 kịch bản mục 14, không đăng ký → F, Chờ duyệt tính chưa xong)
+  - tích hợp `kich-ban-14.int.test.ts` 6: toàn bộ kịch bản mục 14 qua action thật → Không đạt – A1 (11 task thiếu), Đạt – C, Vượt chỉ tiêu – B (2 task vượt). Có thêm case phụ: GV không đăng ký → F + ghi chú, task Chờ duyệt khi chốt → thiếu, cron sai secret → 401, chưa quá hạn không chốt, chạy lại không chốt lại, sau chốt mọi thao tác bị chặn
+  - E2E `buoc-6-kich-ban-14.spec.ts` 8/8: **toàn bộ kịch bản mục 14 qua giao diện** (đăng ký, duyệt, nộp ~60 minh chứng, xin thêm, Chốt kỳ ngay), kiểm tra kết quả ở GV, TBM, Admin
+
+**Tự chọn**
+- Chốt kỳ tính cho mọi tài khoản đang có vai trò GV (chỉ có 1 bộ môn). GV tạo sau khi chốt không có kết quả ("Kỳ đã chốt nhưng không có kết quả…").
+- Thông báo "kỳ đã chốt" gửi cho mọi TBM.
+
+**Còn tồn**
+- Nhắc hạn 3 ngày / 7 ngày làm ở bước 8 (endpoint cron đã gọi sẵn `guiNhacHan`).

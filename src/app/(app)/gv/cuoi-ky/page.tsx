@@ -201,7 +201,7 @@ function NoiDungCuoiKy(props: {
         })}
       </section>
 
-      <XinThemTask tasks={moRong} lyDoKhoa={props.lyDoKhoa} />
+      {!props.daChot && <XinThemTask tasks={moRong} lyDoKhoa={props.lyDoKhoa} />}
     </>
   );
 }

@@ -12,6 +12,7 @@ import {
   soDangKyCuaNhiemVu,
   taskDaCoNguoiLam,
 } from "@/lib/services/phan-viec";
+import { chotKy } from "@/lib/services/chot-ky";
 import { chuoiThanhNgay } from "@/lib/time";
 
 const Ngay = z
@@ -240,5 +241,21 @@ export async function luuBangXepLoai(input: { kyId: string; bacs: { ten: string;
       await tx.bacXepLoai.deleteMany({ where: { kyId: ky.id } });
       await tx.bacXepLoai.createMany({ data: bacs.map((b) => ({ ...b, kyId: ky.id })) });
     });
+  });
+}
+
+// ───────────────────────── Chốt kỳ ─────────────────────────
+
+/** Nút "Chốt kỳ ngay" (demo): chạy chốt kỳ không cần chờ deadline. */
+export async function chotKyNgay(kyId: string) {
+  return hanhDong(async () => {
+    await kiemTraVaiTro("ADMIN");
+    const ky = await db.ky.findUnique({ where: { id: kyId } });
+    if (!ky) throw new LoiNghiepVu("Kỳ không tồn tại.", 404);
+    if (!ky.daCongBo) throw new LoiNghiepVu("Kỳ chưa công bố, không thể chốt.");
+    if (ky.daChot) throw new LoiNghiepVu("Kỳ đã chốt.", 409);
+    const r = await chotKy(kyId);
+    if (!r) throw new LoiNghiepVu("Kỳ vừa được chốt bởi tiến trình khác.", 409);
+    return r;
   });
 }

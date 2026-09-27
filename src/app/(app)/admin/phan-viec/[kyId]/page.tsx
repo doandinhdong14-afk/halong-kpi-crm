@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { ngayThanhChuoi } from "@/lib/time";
 import { BangXepLoai } from "./bang-xep-loai";
 import { DanhSachNhiemVu, type NhiemVuHienThi } from "./danh-sach-nhiem-vu";
+import { NutChotKy } from "./nut-chot-ky";
 import { ThongTinKy } from "./thong-tin-ky";
 
 export default async function TrangChiTietKy(props: PageProps<"/admin/phan-viec/[kyId]">) {
@@ -72,7 +73,9 @@ export default async function TrangChiTietKy(props: PageProps<"/admin/phan-viec/
           daCongBo: ky.daCongBo,
           daChot: ky.daChot,
         }}
-      />
+      >
+        {ky.daCongBo && !ky.daChot && <NutChotKy kyId={ky.id} />}
+      </ThongTinKy>
 
       <Tabs defaultValue="nhiem-vu" className="mt-6">
         <TabsList>

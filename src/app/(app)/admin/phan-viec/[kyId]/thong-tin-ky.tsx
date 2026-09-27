@@ -43,28 +43,30 @@ export function ThongTinKy({ ky, children }: { ky: Ky; children?: React.ReactNod
           </span>
         </div>
 
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            luu.chay(() => suaNgayKy({ kyId: ky.id, ngayBatDau: batDau, ngayKetThuc: ketThuc }), {
-              thanhCong: "Đã lưu ngày của kỳ.",
-            });
-          }}
-        >
-          <div className="space-y-1">
-            <Label htmlFor="ngayBatDau">Ngày bắt đầu</Label>
-            <Input id="ngayBatDau" type="date" value={batDau} onChange={(e) => setBatDau(e.target.value)} disabled={ky.daChot} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="ngayKetThuc">Ngày kết thúc</Label>
-            <Input id="ngayKetThuc" type="date" value={ketThuc} onChange={(e) => setKetThuc(e.target.value)} disabled={ky.daChot} required />
-          </div>
-          <Button type="submit" variant="outline" disabled={ky.daChot || !doi || luu.pending}>
-            Lưu ngày
-          </Button>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <form
+            className="flex flex-wrap items-end gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              luu.chay(() => suaNgayKy({ kyId: ky.id, ngayBatDau: batDau, ngayKetThuc: ketThuc }), {
+                thanhCong: "Đã lưu ngày của kỳ.",
+              });
+            }}
+          >
+            <div className="space-y-1">
+              <Label htmlFor="ngayBatDau">Ngày bắt đầu</Label>
+              <Input id="ngayBatDau" type="date" value={batDau} onChange={(e) => setBatDau(e.target.value)} disabled={ky.daChot} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="ngayKetThuc">Ngày kết thúc</Label>
+              <Input id="ngayKetThuc" type="date" value={ketThuc} onChange={(e) => setKetThuc(e.target.value)} disabled={ky.daChot} required />
+            </div>
+            <Button type="submit" variant="outline" disabled={ky.daChot || !doi || luu.pending}>
+              Lưu ngày
+            </Button>
+          </form>
 
-          <div className="ml-auto flex gap-2">
+          <div className="flex gap-2">
             {!ky.daCongBo && !ky.daChot && (
               <NutXacNhan
                 variant="default"
@@ -79,7 +81,7 @@ export function ThongTinKy({ ky, children }: { ky: Ky; children?: React.ReactNod
             )}
             {children}
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
